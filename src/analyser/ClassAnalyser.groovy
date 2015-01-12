@@ -8,27 +8,42 @@ import org.springframework.util.ClassUtils
 
 
 class ClassAnalyser {
-    def fileName
-    def projectSource
-    def isGrailsProject
+    def testFile
+    def projectDir
     def projectFiles
-    def testPath
+    def pluginsPath
+    def codeFilesPath
+    def testFilesPath
     def visitor
 
     static final GRAILS_PATH = "${System.getProperty("user.home")}${File.separator}.grails${File.separator}ivy-cache"
     static final CUCUMBER_PATH = "$GRAILS_PATH${File.separator}info.cukes${File.separator}cucumber-groovy${File.separator}jars${File.separator}cucumber-groovy-1.1.1.jar"
     static final GEB_PATH = "$GRAILS_PATH${File.separator}org.codehaus.geb${File.separator}geb-core${File.separator}jars${File.separator}geb-core-0.7.1.jar"
-    static final SHIRO_PATH = "$GRAILS_PATH${File.separator}org.apache.shiro${File.separator}shiro-core${File.separator}bundles${File.separator}shiro-core-1.2.0.jar"
 
-    public ClassAnalyser(String fileName, String projectSource, boolean isGrailsProject){
-        this.fileName = fileName
-        this.projectSource = projectSource
-        this.isGrailsProject = isGrailsProject
-        this.projectFiles = Utils.getFilesFromDirectory(projectSource)
-        this.testPath = "$projectSource${File.separator}test"
+    public ClassAnalyser(String testFile, String projectDir, Set pluginPaths){
+        this(testFile, projectDir)
+        this.pluginsPath = pluginPaths
     }
 
-    private generateAstForGrailsProject(String path){
+    public ClassAnalyser(String testFile, String projectDir){
+        this.testFile = testFile
+        this.projectDir = projectDir
+        this.projectFiles = Utils.getFilesFromDirectory(projectDir)
+        this.codeFilesPath = "${projectDir}${File.separator}target${File.separator}classes"
+        this.testFilesPath = "${projectDir}${File.separator}target${File.separator}test-classes${File.separator}functional"
+        this.pluginsPath = []
+    }
+
+    private static generateAst(String path, GroovyClassLoader classLoader){
+        def file = new File(path)
+        SourceUnit unit = SourceUnit.create(file.name, file.text) //or file.absolutePath
+        CompilationUnit compUnit = new CompilationUnit(classLoader)
+        compUnit.addSource(unit)
+        compUnit.compile(Phases.SEMANTIC_ANALYSIS)
+        unit.getAST()
+    }
+
+    private configureClassLoader(){
         def classLoader = new GroovyClassLoader()
 
         //plugin Cucumber
@@ -37,46 +52,26 @@ class ClassAnalyser {
         //plugin Geb
         classLoader.addClasspath(GEB_PATH)
 
-        //plugin Shiro
-        classLoader.addClasspath(SHIRO_PATH)
+        configurePlugins(classLoader)
 
-        //arquivos .class do projeto
-        classLoader.addClasspath("${projectSource}${File.separator}target${File.separator}classes")
+        //compiled code files
+        classLoader.addClasspath(codeFilesPath)
 
-        //diretório principal dos arquivos .class de testes
-        classLoader.addClasspath("${projectSource}${File.separator}target${File.separator}test-classes${File.separator}functional")
+        //compiled code test
+        classLoader.addClasspath(testFilesPath)
 
-        classLoader.addClasspath("${projectSource}${File.separator}grails-app")
-        classLoader.addClasspath("${projectSource}${File.separator}src")
-
-        def file = new File(path)
-        SourceUnit unit = SourceUnit.create(file.name, file.text) //ou file.absolutePath
-        CompilationUnit compUnit = new CompilationUnit(classLoader)
-        compUnit.addSource(unit)
-        compUnit.compile(Phases.SEMANTIC_ANALYSIS)
-
-        unit.getAST()
+        classLoader
     }
 
-    private generateAst(String path){
-        def classLoader = new GroovyClassLoader()
+    private configurePlugins(GroovyClassLoader classLoader){
+        pluginsPath.each{ path ->
+            classLoader.addClasspath(path)
+        }
+    }
 
-        //plugin Cucumber
-        classLoader.addClasspath(CUCUMBER_PATH)
-
-        //plugin Geb
-        classLoader.addClasspath(GEB_PATH)
-
-        //arquivos .class do projeto
-        classLoader.addClasspath(projectSource)
-
-        def file = new File(path)
-        SourceUnit unit = SourceUnit.create(file.name, file.text) //ou file.absolutePath
-        CompilationUnit compUnit = new CompilationUnit(classLoader)
-        compUnit.addSource(unit)
-        compUnit.compile(Phases.SEMANTIC_ANALYSIS)
-
-        unit.getAST()
+    private getAst(String path){
+        def classLoader = configureClassLoader()
+        generateAst(path, classLoader)
     }
 
     private getExternalValidClasses(int index){
@@ -92,7 +87,7 @@ class ClassAnalyser {
         externalValidClasses
     }
 
-    private getClassPath(String className){
+    private String getClassPath(String className){
         def name = ClassUtils.convertClassNameToResourcePath(className)+".groovy"
         name = name.replace("/", "\\")
         projectFiles.find{it.contains(name)}
@@ -115,7 +110,6 @@ class ClassAnalyser {
         methods
     }
 
-    /* Retorna uma lista de classes e seus respectivos métodos para serem analisados. */
     private listFilesToVisit(int index, List visitedFiles){
         def files = []
         def externalValidClasses = getExternalValidClasses(index)
@@ -124,7 +118,7 @@ class ClassAnalyser {
             def file = getClassPath(className)
             if(file){
                 def methods = getMethodsToVisit(className, file, visitedFiles)
-                if(!methods.isEmpty()) files += [path:file, methods:methods]
+                if(!methods.isEmpty()) files += [path:file, methods:methods] //file to analyse and its methods
             }
         }
 
@@ -132,7 +126,7 @@ class ClassAnalyser {
     }
 
     def doDirectAnalysis(){
-        def ast = isGrailsProject? generateAstForGrailsProject(fileName):generateAst(fileName)
+        def ast = getAst(testFile)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
         classNode.visitContents(visitor)
@@ -145,7 +139,7 @@ class ClassAnalyser {
         def files = listFilesToVisit(0, visitedFiles)
         while(!files.isEmpty()) {
             files.each { f ->
-                def ast = isGrailsProject ? generateAstForGrailsProject(f.path) : generateAst(f.path)
+                def ast = getAst(f.path)
                 def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                 ast.classes.get(0).visitContents(auxVisitor)
             }
@@ -153,7 +147,7 @@ class ClassAnalyser {
             files = listFilesToVisit(files.size(), visitedFiles)
         }
 
-        println "ARQUIVOS VISITADOS NA ANÁLISE INDIRETA"
+        println "Visited files during indirect analysis: "
         visitedFiles.each{ arq ->
             println arq.path
         }
@@ -175,7 +169,7 @@ class ClassAnalyser {
 
     def listReferencedClasses(){
         println "Referenced classes: "
-        visitor?.referencedClasses.each{
+        visitor?.referencedClasses?.each{
             println "$it.name"
         }
         println "---------------------------------------------------------------------------------"
@@ -183,7 +177,7 @@ class ClassAnalyser {
 
     def listCalledMethods(){
         println "Called methods: "
-        visitor?.calledMethods.eachWithIndex{ obj, i ->
+        visitor?.calledMethods?.eachWithIndex{ obj, i ->
             println "($i) $obj.name: $obj.type"
         }
         println "---------------------------------------------------------------------------------"
@@ -191,7 +185,7 @@ class ClassAnalyser {
 
     def listFields(){
         println "Fields: "
-        visitor?.fields.each{
+        visitor?.fields?.each{
             println "$it.name: $it.type: $it.value"
         }
         println "---------------------------------------------------------------------------------"
@@ -199,7 +193,7 @@ class ClassAnalyser {
 
     def listProperties(){
         println "Properties: "
-        visitor?.accessedProperties.each{
+        visitor?.accessedProperties?.each{
             println "$it.name: $it.type"
         }
         println "---------------------------------------------------------------------------------"
@@ -207,7 +201,7 @@ class ClassAnalyser {
 
     def listStaticFields(){
         println "Static Fields: "
-        visitor?.staticFields.each{
+        visitor?.staticFields?.each{
             println "$it.name: $it.type: $it.value"
         }
         println "---------------------------------------------------------------------------------"
@@ -215,7 +209,7 @@ class ClassAnalyser {
 
     def listCalledPageMethods(){
         println "Called page methods: "
-        visitor?.calledPageMethods.each{
+        visitor?.calledPageMethods?.each{
             println "$it.name: $it.arg"
         }
         println "---------------------------------------------------------------------------------"

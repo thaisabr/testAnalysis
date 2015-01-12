@@ -2,16 +2,9 @@ package analyser
 
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
-import org.codehaus.groovy.ast.expr.ClassExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
-import org.codehaus.groovy.ast.expr.RangeExpression
-import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
-import org.codehaus.groovy.ast.expr.MethodCallExpression
-import org.codehaus.groovy.ast.expr.ConstructorCallExpression
-import org.codehaus.groovy.ast.expr.StaticMethodCallExpression
 import org.springframework.util.ClassUtils
-
 
 class Visitor extends ClassCodeVisitorSupport {
     SourceUnit source
@@ -22,25 +15,26 @@ class Visitor extends ClassCodeVisitorSupport {
     def accessedProperties
     def calledPageMethods
     def className
-    def projectFiles //só são consideradas válidas essas classes
+    def projectFiles //valid files
 
-    /************************* expressão regular para identificar classes e métodos inválidos *************************/
+    /******************************* Regex to identify invalid classes and methods ************************************/
     static INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     /******************************************************************************************************************/
 
     static final PAGE_METHODS = ['to', 'at']
+    static final GROOVY_FILENAME_EXTENSION = ".groovy"
     //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     public Visitor (String name, List projectFiles){
-        source = null
-        referencedClasses = [] as Set
-        calledMethods = [] as Set
-        staticFields = [] as Set
-        fields = [] as Set
-        accessedProperties = [] as Set
-        calledPageMethods = [] as Set
-        className = name
+        this.source = null
+        this.referencedClasses = [] as Set
+        this.calledMethods = [] as Set
+        this.staticFields = [] as Set
+        this.fields = [] as Set
+        this.accessedProperties = [] as Set
+        this.calledPageMethods = [] as Set
+        this.className = name
         this.projectFiles = projectFiles
     }
 
@@ -48,7 +42,7 @@ class Visitor extends ClassCodeVisitorSupport {
         if(projectFiles){
             def result = projectFiles?.find{ name ->
                 def aux = ClassUtils.convertResourcePathToClassName(name)
-                aux ==~ /.*$referencedClass\.groovy/
+                aux ==~ /.*$referencedClass\$GROOVY_FILENAME_EXTENSION/
             }
             if (result) true
             else false
@@ -56,7 +50,7 @@ class Visitor extends ClassCodeVisitorSupport {
         else true
     }
 
-    private boolean isValidClassByAPI(String referencedClass){
+    private static boolean isValidClassByAPI(String referencedClass){
         if(INVALID_CLASS_REGEX) {
             if(referencedClass ==~ INVALID_CLASS_REGEX) false
             else true
@@ -71,19 +65,19 @@ class Visitor extends ClassCodeVisitorSupport {
         else false
     }
 
-    private boolean isValidMethod(referencedMethod){
+    private static boolean isValidMethod(String referencedMethod){
         if(referencedMethod ==~ INVALID_METHOD_REGEX) false
         else true
     }
 
-    private boolean isPageMethod(referencedMethod){
+    private static boolean isPageMethod(String referencedMethod){
         if(referencedMethod in PAGE_METHODS) true
         else false
     }
 
     private registryMethodCall(MethodCallExpression call){
         def result = false
-        def className = call.receiver.type.name.replace("[L", "")
+        def className = call.receiver.type.name.replace("[L", "") //deals with
         className = className.replace(";","")
         if( isValidClass(className) ) {
             calledMethods += [name:call.methodAsString, type:className]
@@ -94,12 +88,13 @@ class Visitor extends ClassCodeVisitorSupport {
 
     private boolean registryIsInternalValidMethodCall(MethodCallExpression call){
         def result = false
-        if (call.implicitThis && isValidMethod(call.methodAsString)) { //chamada de método da classe
+        if (call.implicitThis && isValidMethod(call.methodAsString)) { //call from test code
             if( isPageMethod(call.methodAsString) ){
                 def value = call.arguments.text
                 calledPageMethods += [name: call.methodAsString, arg:value.substring(1,value.length()-1)]
-            } /*else {
-                //chamada de método da própria classe não interessa!!!!
+            }
+            /*else {
+                //calls for other methods do not need to be registered
                 //calledMethods += [name: call.methodAsString, type: className]
             }*/
             result = true
@@ -109,7 +104,7 @@ class Visitor extends ClassCodeVisitorSupport {
 
     private boolean registryIsExternalValidMethodCall(MethodCallExpression call){
         def result = false
-        if(!call.implicitThis) { //chamada de método de outra classe
+        if(!call.implicitThis) { //call from other class
             if (call.receiver.dynamicTyped) {
                 calledMethods += [name: call.methodAsString, type: null]
                 result = true
@@ -120,8 +115,8 @@ class Visitor extends ClassCodeVisitorSupport {
         result
     }
 
-    private printMethodCall(MethodCallExpression call){
-        println "!!!!!!!!!!! múltiplas chamadas !!!!!!!!!!!"
+    private static printMethodCall(MethodCallExpression call){
+        println "!!!!!!!!!!!!! composite call !!!!!!!!!!!!!"
         println "call text: $call.text"
         println "call.receiver.class: ${call.receiver.toString()}"
         call.properties.each{ k, v ->
@@ -138,7 +133,7 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitConstructorCallExpression(ConstructorCallExpression call){
         super.visitConstructorCallExpression(call)
-        if( isValidClass(call?.type.name) ) referencedClasses += [name: call.type.name]
+        if( isValidClass(call?.type?.name) ) referencedClasses += [name: call?.type?.name]
     }
 
     @Override
@@ -146,33 +141,31 @@ class Visitor extends ClassCodeVisitorSupport {
         super.visitMethodCallExpression(call)
 
         switch (call.receiver.class){
-            case ConstructorCallExpression.class: //caso de múltiplas chamadas em uma linha, com chamada de construtor
+            case ConstructorCallExpression.class: //composite call that includes constructor call
                 // ex: def path = new File(".").getCanonicalPath() + File.separator + "test" + File.separator + "files" + File.separator + "TCS.pdf"
                 if (isValidClass(call.receiver.type.name)) {
                     referencedClasses += [name: call.receiver.type.name]
                     calledMethods += [name:call.methodAsString, type:call.objectExpression.type.name]
                 }
                 break
-            case VariableExpression.class: //chamada comum através de variável de referência
+            case VariableExpression.class: //call that uses a reference variable
                 def result = registryIsInternalValidMethodCall(call)
                 if(!result) registryIsExternalValidMethodCall(call)
                 break
-            case MethodCallExpression.class: //caso de múltiplas chamadas em uma única linha, sem chamada de construtor
+            case MethodCallExpression.class: //composite call that does not include constructor call
             case PropertyExpression.class:
-            case ClassExpression.class: //chamada de método static de outra classe (se chamado usando o nome da classe)
+            case ClassExpression.class: //static method call from another class that uses the class name
                 registryMethodCall(call)
                 break
-            case RangeExpression.class: //não precisa registrar nada porque é chamada da API somente
+            case RangeExpression.class: //API call
                 break
             default:
                 printMethodCall(call)
-                //RangeExpression.class poderia ser tratado aqui, mas ficou separado por já ter sido identificado
-                //(vide método isSorted em ArticleTestDataAndOperations)
         }
     }
 
     @Override
-    //Quando é método static da própria classe ou método step (static import). Esses 2 casos, inclusive, são desprezados
+    //Static method or step method(static import)
     public void visitStaticMethodCallExpression(StaticMethodCallExpression call){
         super.visitStaticMethodCallExpression(call)
         if (isValidClass(call.ownerType.name)){
@@ -183,23 +176,18 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitField(FieldNode node){
         super.visitField(node)
-        if(node.static) staticFields += [name:node.name, type:node.type.name, value:node.initialValueExpression.value]
-        else fields += [name:node.name, type:node.type.name, value:node.initialValueExpression.value]
+        def result = [name:node.name, type:node.type.name, value:node.initialValueExpression.value]
+        if(node.static) staticFields += result
+        else fields += result
     }
 
     @Override
-    public void visitPropertyExpression(PropertyExpression expression){ //atributos e constantes de outras classes
+    //fields and constants from other classes
+    public void visitPropertyExpression(PropertyExpression expression){
         super.visitPropertyExpression(expression)
         if ( isValidClass(expression.objectExpression.type.name) ){
             accessedProperties += [name:expression.propertyAsString, type:expression.objectExpression.type.name]
         }
-
-        /*
-          Exemplo: Periodico p = new Periodico
-          p.volume
-          Se p for dinamicamente tipada, o tipo vai ser object, daí que não passa no if e não é computado o acesso
-          File.separator não entra porque é da API de Java, não passa no if
-        */
     }
 
 }

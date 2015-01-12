@@ -21,6 +21,4 @@ class Utils {
         else false
     }
 
-
-
 }
