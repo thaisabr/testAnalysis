@@ -23,7 +23,6 @@ class Visitor extends ClassCodeVisitorSupport {
     /******************************************************************************************************************/
 
     static final PAGE_METHODS = ['to', 'at']
-    static final GROOVY_FILENAME_EXTENSION = ".groovy"
     //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     public Visitor (String name, List projectFiles){
@@ -42,7 +41,7 @@ class Visitor extends ClassCodeVisitorSupport {
         if(projectFiles){
             def result = projectFiles?.find{ name ->
                 def aux = ClassUtils.convertResourcePathToClassName(name)
-                aux ==~ /.*$referencedClass\$GROOVY_FILENAME_EXTENSION/
+                aux ==~ /.*$referencedClass\$Utils.GROOVY_FILENAME_EXTENSION/
             }
             if (result) true
             else false

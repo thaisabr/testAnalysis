@@ -11,30 +11,40 @@ class ClassAnalyser {
     def testFile
     def projectDir
     def projectFiles
-    def pluginsPath
+    List pluginsPath
     def codeFilesPath
     def testFilesPath
+    GroovyClassLoader classLoader
     def visitor
 
+    //Grails default path of dependency cache: local file system at user.home/.grails/ivy-cache or user.home/.m2/repository when using Aether
     static final GRAILS_PATH = "${System.getProperty("user.home")}${File.separator}.grails${File.separator}ivy-cache"
-    static final CUCUMBER_PATH = "$GRAILS_PATH${File.separator}info.cukes${File.separator}cucumber-groovy${File.separator}jars${File.separator}cucumber-groovy-1.1.1.jar"
-    static final GEB_PATH = "$GRAILS_PATH${File.separator}org.codehaus.geb${File.separator}geb-core${File.separator}jars${File.separator}geb-core-0.7.1.jar"
 
-    public ClassAnalyser(String testFile, String projectDir, Set pluginPaths){
-        this(testFile, projectDir)
+    public ClassAnalyser(String testFile, String projectDir, Set pluginPaths, String compiledCodeDir, String compiledTestCodeDir){
+        this.testFile = testFile
+        this.projectDir = projectDir
+        this.projectFiles = Utils.getFilesFromDirectory(projectDir)
+        this.codeFilesPath = compiledCodeDir
+        this.testFilesPath = compiledTestCodeDir
         this.pluginsPath = pluginPaths
+        configureClassLoader()
     }
 
-    public ClassAnalyser(String testFile, String projectDir){
+    public ClassAnalyser(String testFile, String projectDir, List pluginPaths){
         this.testFile = testFile
         this.projectDir = projectDir
         this.projectFiles = Utils.getFilesFromDirectory(projectDir)
         this.codeFilesPath = "${projectDir}${File.separator}target${File.separator}classes"
         this.testFilesPath = "${projectDir}${File.separator}target${File.separator}test-classes${File.separator}functional"
-        this.pluginsPath = []
+        this.pluginsPath = pluginPaths
+        configureClassLoader()
     }
 
-    private static generateAst(String path, GroovyClassLoader classLoader){
+    public ClassAnalyser(String testFile, String projectDir){
+        this(testFile, projectDir, [])
+    }
+
+    private generateAst(String path){
         def file = new File(path)
         SourceUnit unit = SourceUnit.create(file.name, file.text) //or file.absolutePath
         CompilationUnit compUnit = new CompilationUnit(classLoader)
@@ -44,34 +54,33 @@ class ClassAnalyser {
     }
 
     private configureClassLoader(){
-        def classLoader = new GroovyClassLoader()
+        classLoader = new GroovyClassLoader()
 
-        //plugin Cucumber
-        classLoader.addClasspath(CUCUMBER_PATH)
-
-        //plugin Geb
-        classLoader.addClasspath(GEB_PATH)
-
-        configurePlugins(classLoader)
+        configurePlugins()
 
         //compiled code files
         classLoader.addClasspath(codeFilesPath)
+        println "Compiled code path: $codeFilesPath"
 
         //compiled code test
         classLoader.addClasspath(testFilesPath)
-
-        classLoader
+        println "Compiled test code path: $testFilesPath"
     }
 
-    private configurePlugins(GroovyClassLoader classLoader){
-        pluginsPath.each{ path ->
-            classLoader.addClasspath(path)
+    private configurePlugins(){
+        if(pluginsPath.isEmpty()){
+            def jars = Utils.getJarFilesFromDirectory(GRAILS_PATH)
+            jars?.each{
+                classLoader.addClasspath(it)
+                println "jar: $it"
+            }
         }
-    }
-
-    private getAst(String path){
-        def classLoader = configureClassLoader()
-        generateAst(path, classLoader)
+        else{
+            pluginsPath?.each{ path ->
+                classLoader.addClasspath(path)
+                println "Plugin path: $path"
+            }
+        }
     }
 
     private getExternalValidClasses(int index){
@@ -85,12 +94,6 @@ class ClassAnalyser {
         externalValidClasses = classes?.findAll{ it!= null && Utils.isTestCode(it) }
 
         externalValidClasses
-    }
-
-    private String getClassPath(String className){
-        def name = ClassUtils.convertClassNameToResourcePath(className)+".groovy"
-        name = name.replace("/", "\\")
-        projectFiles.find{it.contains(name)}
     }
 
     private getMethodsToVisit(String className, String file, List visitedFiles){
@@ -115,7 +118,7 @@ class ClassAnalyser {
         def externalValidClasses = getExternalValidClasses(index)
 
         externalValidClasses.each{ className ->
-            def file = getClassPath(className)
+            def file = Utils.getClassPath(className, projectFiles)
             if(file){
                 def methods = getMethodsToVisit(className, file, visitedFiles)
                 if(!methods.isEmpty()) files += [path:file, methods:methods] //file to analyse and its methods
@@ -126,7 +129,7 @@ class ClassAnalyser {
     }
 
     def doDirectAnalysis(){
-        def ast = getAst(testFile)
+        def ast = generateAst(testFile)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
         classNode.visitContents(visitor)
@@ -139,7 +142,7 @@ class ClassAnalyser {
         def files = listFilesToVisit(0, visitedFiles)
         while(!files.isEmpty()) {
             files.each { f ->
-                def ast = getAst(f.path)
+                def ast = generateAst(f.path)
                 def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                 ast.classes.get(0).visitContents(auxVisitor)
             }
