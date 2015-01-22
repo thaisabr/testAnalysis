@@ -14,10 +14,7 @@ class MainTestRGMS {
             def CUCUMBER_PATH = "$GRAILS_PATH${File.separator}info.cukes${File.separator}cucumber-groovy${File.separator}jars${File.separator}cucumber-groovy-1.1.1.jar"
             def GEB_PATH = "$GRAILS_PATH${File.separator}org.codehaus.geb${File.separator}geb-core${File.separator}jars${File.separator}geb-core-0.7.1.jar"
             def SHIRO_PATH = "$GRAILS_PATH${File.separator}org.apache.shiro${File.separator}shiro-core${File.separator}bundles${File.separator}shiro-core-1.2.0.jar"
-            def plugins = []
-            plugins += CUCUMBER_PATH
-            plugins += GEB_PATH
-            plugins += SHIRO_PATH
+            def plugins = [CUCUMBER_PATH, GEB_PATH, SHIRO_PATH]
             def analyser = new ClassAnalyser(testFile, projectDir, plugins)
          */
 
@@ -28,10 +25,12 @@ class MainTestRGMS {
         println ">>>>>>>>>>>>>>>>>>>>>>>>>>> DIRECT ANALYSIS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
         analyser.doDirectAnalysis()
         analyser.printAnalysisResult()
+        analyser.printAnalysisResultFromProductionCode()
 
         println ">>>>>>>>>>>>>>>>>>>>>>>>>>> INDIRECT ANALYSIS <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
         analyser.doIndirectAnalysis()
         analyser.printAnalysisResult()
+        analyser.printAnalysisResultFromProductionCode()
     }
 
 }

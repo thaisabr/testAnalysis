@@ -7,6 +7,47 @@ class Utils {
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
+    static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
+    static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
+    static final PAGE_METHODS = ['to', 'at']
+    //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
+
+    static boolean isValidClassByAPI(String referencedClass){
+        if(INVALID_CLASS_REGEX) {
+            if(referencedClass ==~ INVALID_CLASS_REGEX) false
+            else true
+        }
+        else true
+    }
+
+    static boolean isValidClass(String referencedClass, List projectFiles){
+        if(isValidClassByProject(referencedClass, projectFiles) && isValidClassByAPI(referencedClass)){
+            true
+        }
+        else false
+    }
+
+    static boolean isValidMethod(String referencedMethod){
+        if(referencedMethod ==~ INVALID_METHOD_REGEX) false
+        else true
+    }
+
+    static boolean isPageMethod(String referencedMethod){
+        if(referencedMethod in PAGE_METHODS) true
+        else false
+    }
+
+    static boolean isValidClassByProject(String referencedClass, List projectFiles){
+        if(projectFiles){
+            def result = projectFiles?.find{ name ->
+                def aux = ClassUtils.convertResourcePathToClassName(name)
+                aux ==~ /.*$referencedClass\$GROOVY_FILENAME_EXTENSION/
+            }
+            if (result) true
+            else false
+        }
+        else true
+    }
 
     static getFilesFromDirectory(String directory){
         def f = new File(directory)

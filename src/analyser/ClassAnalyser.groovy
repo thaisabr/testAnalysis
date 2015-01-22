@@ -157,8 +157,27 @@ class ClassAnalyser {
         println "---------------------------------------------------------------------------------"
     }
 
-    def getCalledMethods(){
-        visitor?.calledMethods
+    def listCalledProductionMethods(){
+        println "Called production Methods:"
+        def methods = visitor?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+        methods?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.type"
+        }
+        println "---------------------------------------------------------------------------------"
+    }
+
+    def listReferencedProductionClasses(){
+        println "Referenced production classes:"
+        def classes =  visitor?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
+        classes?.each{
+            println "$it.name"
+        }
+        println "---------------------------------------------------------------------------------"
+    }
+
+    def printAnalysisResultFromProductionCode(){
+        listCalledProductionMethods()
+        listReferencedProductionClasses()
     }
 
     def printAnalysisResult(){
@@ -203,7 +222,7 @@ class ClassAnalyser {
     }
 
     def listStaticFields(){
-        println "Static Fields: "
+        println "Static fields: "
         visitor?.staticFields?.each{
             println "$it.name: $it.type: $it.value"
         }
