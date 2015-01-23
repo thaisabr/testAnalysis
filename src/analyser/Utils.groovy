@@ -73,8 +73,26 @@ class Utils {
 
     static String getClassPath(String className, List projectFiles){
         def name = ClassUtils.convertClassNameToResourcePath(className)+GROOVY_FILENAME_EXTENSION
-        name = name.replace("/", "\\")
+        name = name.replace("/", File.separator)
+        name = name.replace("\\", File.separator)
         projectFiles?.find{it.contains(name)}
+    }
+
+    static String getGspPath(String resourcePath, List projectFiles, String projectDir){
+        def name = resourcePath.replace("/", File.separator)
+        name = name.replace("\\", File.separator)
+
+        int n = name.count(File.separator)
+        if(n>1){
+            def index = name.lastIndexOf(File.separator)
+            name = name.substring(0,index)
+        }
+
+        def match = projectFiles?.find{ it.contains(name) }
+        if(match) name = match - (projectDir+File.separator)
+        else name = ""
+
+        name
     }
 
 }

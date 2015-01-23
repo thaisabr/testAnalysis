@@ -157,27 +157,17 @@ class ClassAnalyser {
         println "---------------------------------------------------------------------------------"
     }
 
-    def listCalledProductionMethods(){
-        println "Called production Methods:"
-        def methods = visitor?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
-        methods?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type"
+    def extractGSPClassesName(){
+        def pageCodeVisitor = new PageCodeVisitor(projectFiles, projectDir)
+        def filesToVisit = visitor?.calledPageMethods*.arg as Set
+        filesToVisit?.each{ f ->
+            def file = Utils.getClassPath(f, projectFiles)
+            if(file){
+                def ast = generateAst(file)
+                ast.classes.get(0).visitContents(pageCodeVisitor)
+            }
         }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listReferencedProductionClasses(){
-        println "Referenced production classes:"
-        def classes =  visitor?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
-        classes?.each{
-            println "$it.name"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def printAnalysisResultFromProductionCode(){
-        listCalledProductionMethods()
-        listReferencedProductionClasses()
+        pageCodeVisitor.pages
     }
 
     def printAnalysisResult(){
@@ -191,8 +181,8 @@ class ClassAnalyser {
 
     def listReferencedClasses(){
         println "Referenced classes: "
-        visitor?.referencedClasses?.each{
-            println "$it.name"
+        visitor?.referencedClasses?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name"
         }
         println "---------------------------------------------------------------------------------"
     }
@@ -207,34 +197,65 @@ class ClassAnalyser {
 
     def listFields(){
         println "Fields: "
-        visitor?.fields?.each{
-            println "$it.name: $it.type: $it.value"
+        visitor?.fields?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.type: $obj.value"
         }
         println "---------------------------------------------------------------------------------"
     }
 
     def listProperties(){
         println "Properties: "
-        visitor?.accessedProperties?.each{
-            println "$it.name: $it.type"
+        visitor?.accessedProperties?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.type"
         }
         println "---------------------------------------------------------------------------------"
     }
 
     def listStaticFields(){
         println "Static fields: "
-        visitor?.staticFields?.each{
-            println "$it.name: $it.type: $it.value"
+        visitor?.staticFields?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.type: $obj.value"
         }
         println "---------------------------------------------------------------------------------"
     }
 
     def listCalledPageMethods(){
         println "Called page methods: "
-        visitor?.calledPageMethods?.each{
-            println "$it.name: $it.arg"
+        visitor?.calledPageMethods?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.arg"
         }
         println "---------------------------------------------------------------------------------"
+    }
+
+    def printAnalysisResultFromProductionCode(){
+        listCalledProductionMethods()
+        listReferencedProductionClasses()
+        listGSP()
+        println "---------------------------------------------------------------------------------"
+    }
+
+    def listCalledProductionMethods(){
+        println "<Called production Methods>"
+        def methods = visitor?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+        methods?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name: $obj.type"
+        }
+    }
+
+    def listGSP(){
+        println "<Referenced production files>"
+        def pages = extractGSPClassesName()
+        pages?.eachWithIndex{ obj, i ->
+            println "($i) $obj"
+        }
+    }
+
+    def listReferencedProductionClasses(){
+        println "<Referenced production classes>"
+        def classes =  visitor?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
+        classes?.eachWithIndex{ obj, i ->
+            println "($i) $obj.name"
+        }
     }
 
 }
