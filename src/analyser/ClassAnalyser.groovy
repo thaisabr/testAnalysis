@@ -4,44 +4,24 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
-import org.springframework.util.ClassUtils
 
 
 class ClassAnalyser {
-    def testFile
-    def projectDir
+    def config
     def projectFiles
     List pluginsPath
-    def codeFilesPath
-    def testFilesPath
     GroovyClassLoader classLoader
     def visitor
 
-    //Grails default path of dependency cache: local file system at user.home/.grails/ivy-cache or user.home/.m2/repository when using Aether
-    static final GRAILS_PATH = "${System.getProperty("user.home")}${File.separator}.grails${File.separator}ivy-cache"
-
-    public ClassAnalyser(String testFile, String projectDir, Set pluginPaths, String compiledCodeDir, String compiledTestCodeDir){
-        this.testFile = testFile
-        this.projectDir = projectDir
-        this.projectFiles = Utils.getFilesFromDirectory(projectDir)
-        this.codeFilesPath = compiledCodeDir
-        this.testFilesPath = compiledTestCodeDir
-        this.pluginsPath = pluginPaths
+    public ClassAnalyser(){
+        this.config = new ConfigSlurper().parse(new File('Config.groovy').toURL())
+        this.projectFiles = Utils.getFilesFromDirectory(config.project.path)
+        this.pluginsPath = []
+        config.grails.plugin.path?.each{ k, v ->
+            this.pluginsPath += v
+        }
         configureClassLoader()
-    }
-
-    public ClassAnalyser(String testFile, String projectDir, List pluginPaths){
-        this.testFile = testFile
-        this.projectDir = projectDir
-        this.projectFiles = Utils.getFilesFromDirectory(projectDir)
-        this.codeFilesPath = "${projectDir}${File.separator}target${File.separator}classes"
-        this.testFilesPath = "${projectDir}${File.separator}target${File.separator}test-classes${File.separator}functional"
-        this.pluginsPath = pluginPaths
-        configureClassLoader()
-    }
-
-    public ClassAnalyser(String testFile, String projectDir){
-        this(testFile, projectDir, [])
+        println "Code to analyse: ${config.project.test.file}\n"
     }
 
     private generateAst(String path){
@@ -59,17 +39,17 @@ class ClassAnalyser {
         configurePlugins()
 
         //compiled code files
-        classLoader.addClasspath(codeFilesPath)
-        println "Compiled code path: $codeFilesPath"
+        classLoader.addClasspath(config.project.production.path)
+        println "Compiled code path: ${config.project.production.path}"
 
-        //compiled code test
-        classLoader.addClasspath(testFilesPath)
-        println "Compiled test code path: $testFilesPath"
+        //compiled test code
+        classLoader.addClasspath(config.project.test.path)
+        println "Compiled test code path: ${config.project.test.path}"
     }
 
     private configurePlugins(){
         if(pluginsPath.isEmpty()){
-            def jars = Utils.getJarFilesFromDirectory(GRAILS_PATH)
+            def jars = Utils.getJarFilesFromDirectory(config.grails.dependencyCache)
             jars?.each{
                 classLoader.addClasspath(it)
                 println "jar: $it"
@@ -129,7 +109,7 @@ class ClassAnalyser {
     }
 
     def doDirectAnalysis(){
-        def ast = generateAst(testFile)
+        def ast = generateAst(config.project.test.file)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
         classNode.visitContents(visitor)
@@ -158,7 +138,7 @@ class ClassAnalyser {
     }
 
     def extractGSPClassesName(){
-        def pageCodeVisitor = new PageCodeVisitor(projectFiles, projectDir)
+        def pageCodeVisitor = new PageCodeVisitor(projectFiles, config.project.path)
         def filesToVisit = visitor?.calledPageMethods*.arg as Set
         filesToVisit?.each{ f ->
             def file = Utils.getClassPath(f, projectFiles)
