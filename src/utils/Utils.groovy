@@ -1,4 +1,4 @@
-package analyser
+package utils
 
 import org.springframework.util.ClassUtils
 
@@ -7,9 +7,11 @@ class Utils {
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
+    static final INTERFACE_FILENAME_EXTENSION = "Interface.txt"
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     static final PAGE_METHODS = ['to', 'at']
+    static final CONFIG_FILE_NAME = 'Config.groovy'
     //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     static boolean isValidClassByAPI(String referencedClass){
@@ -71,7 +73,7 @@ class Utils {
         else false
     }
 
-    static String getClassPath(String className, List projectFiles){
+    static String getClassPath(String className, Collection projectFiles){
         def name = ClassUtils.convertClassNameToResourcePath(className)+GROOVY_FILENAME_EXTENSION
         name = name.replace("/", File.separator)
         name = name.replace("\\", File.separator)
@@ -93,6 +95,12 @@ class Utils {
         else name = ""
 
         name
+    }
+
+    static getInterfaceFileName(String path){
+        def beginIndex = path.lastIndexOf(File.separator)
+        def name = path.substring(beginIndex+1)
+        name - GROOVY_FILENAME_EXTENSION + INTERFACE_FILENAME_EXTENSION
     }
 
 }

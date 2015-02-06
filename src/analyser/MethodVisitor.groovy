@@ -11,7 +11,7 @@ class MethodVisitor extends ClassCodeVisitorSupport {
     def projectFiles
     def methodCallVisitor
 
-    public MethodVisitor(String name, List projectFiles, List methods, Visitor visitor){
+    public MethodVisitor(String name, Collection projectFiles, List methods, Visitor visitor){
         className = name
         this.projectFiles = projectFiles
         this.methods = methods

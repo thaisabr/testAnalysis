@@ -4,24 +4,27 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
+import output.ScenarioInterfaceManager
+import utils.Utils
 
 
 class ClassAnalyser {
     def config
-    def projectFiles
+    Collection projectFiles
     List pluginsPath
     GroovyClassLoader classLoader
-    def visitor
+    Visitor visitor
+    ScenarioInterfaceManager interfaceManager
 
     public ClassAnalyser(){
-        this.config = new ConfigSlurper().parse(new File('Config.groovy').toURL())
+        this.config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
         this.projectFiles = Utils.getFilesFromDirectory(config.project.path)
         this.pluginsPath = []
         config.grails.plugin.path?.each{ k, v ->
             this.pluginsPath += v
         }
         configureClassLoader()
-        println "Code to analyse: ${config.project.test.file}\n"
+        this.interfaceManager = new ScenarioInterfaceManager(config.project.test.file)
     }
 
     private generateAst(String path){
@@ -66,7 +69,7 @@ class ClassAnalyser {
     private getExternalValidClasses(int index){
         def externalValidClasses = []
 
-        def set = visitor.calledMethods*.type as Set
+        def set = visitor?.scenarioInterface?.calledMethods*.type as Set
         if(set.isEmpty()) externalValidClasses
 
         def list = set as List
@@ -76,8 +79,8 @@ class ClassAnalyser {
         externalValidClasses
     }
 
-    private getMethodsToVisit(String className, String file, List visitedFiles){
-        def methods = visitor.calledMethods.findAll{it.type == className}.sort{it.name}
+    private getMethodsToVisit(String className, String file, Collection visitedFiles){
+        def methods = visitor?.scenarioInterface?.calledMethods?.findAll{it.type == className}?.sort{it.name}
         methods = methods*.name
         def alreadyVisitedFile = visitedFiles?.find{ it.path == file }
 
@@ -93,7 +96,7 @@ class ClassAnalyser {
         methods
     }
 
-    private listFilesToVisit(int index, List visitedFiles){
+    private listFilesToVisit(int index, Collection visitedFiles){
         def files = []
         def externalValidClasses = getExternalValidClasses(index)
 
@@ -108,16 +111,34 @@ class ClassAnalyser {
         files
     }
 
-    def doDirectAnalysis(){
+    private extractGSPClassesName(){
+        def pageCodeVisitor = new PageCodeVisitor(projectFiles)
+        def filesToVisit = visitor?.scenarioInterface?.calledPageMethods*.arg as Set
+        filesToVisit?.each{ f ->
+            def file = Utils.getClassPath(f, projectFiles)
+            if(file){
+                def ast = generateAst(file)
+                ast.classes.get(0).visitContents(pageCodeVisitor)
+            }
+        }
+        visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
+    }
+
+    private doBasicAnalysis(){
         def ast = generateAst(config.project.test.file)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
         classNode.visitContents(visitor)
     }
 
+    def doDirectAnalysis(){
+        doBasicAnalysis()
+        interfaceManager.generateScenarioInterface(visitor.scenarioInterface)
+    }
+
     def doIndirectAnalysis(){
         def visitedFiles = []
-        if(!visitor) doDirectAnalysis()
+        if(!visitor) doBasicAnalysis()
 
         def files = listFilesToVisit(0, visitedFiles)
         while(!files.isEmpty()) {
@@ -130,112 +151,14 @@ class ClassAnalyser {
             files = listFilesToVisit(files.size(), visitedFiles)
         }
 
+        extractGSPClassesName()
+        interfaceManager.generateScenarioInterface(visitor.scenarioInterface)
+
         println "Visited files during indirect analysis: "
         visitedFiles.each{ arq ->
             println arq.path
         }
         println "---------------------------------------------------------------------------------"
-    }
-
-    def extractGSPClassesName(){
-        def pageCodeVisitor = new PageCodeVisitor(projectFiles, config.project.path)
-        def filesToVisit = visitor?.calledPageMethods*.arg as Set
-        filesToVisit?.each{ f ->
-            def file = Utils.getClassPath(f, projectFiles)
-            if(file){
-                def ast = generateAst(file)
-                ast.classes.get(0).visitContents(pageCodeVisitor)
-            }
-        }
-        pageCodeVisitor.pages
-    }
-
-    def printAnalysisResult(){
-        listReferencedClasses()
-        listCalledMethods()
-        listFields()
-        listProperties()
-        listStaticFields()
-        listCalledPageMethods()
-    }
-
-    def listReferencedClasses(){
-        println "Referenced classes: "
-        visitor?.referencedClasses?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listCalledMethods(){
-        println "Called methods: "
-        visitor?.calledMethods?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listFields(){
-        println "Fields: "
-        visitor?.fields?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type: $obj.value"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listProperties(){
-        println "Properties: "
-        visitor?.accessedProperties?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listStaticFields(){
-        println "Static fields: "
-        visitor?.staticFields?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type: $obj.value"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listCalledPageMethods(){
-        println "Called page methods: "
-        visitor?.calledPageMethods?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.arg"
-        }
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def printAnalysisResultFromProductionCode(){
-        listCalledProductionMethods()
-        listReferencedProductionClasses()
-        listGSP()
-        println "---------------------------------------------------------------------------------"
-    }
-
-    def listCalledProductionMethods(){
-        println "<Called production Methods>"
-        def methods = visitor?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
-        methods?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name: $obj.type"
-        }
-    }
-
-    def listGSP(){
-        println "<Referenced production files>"
-        def pages = extractGSPClassesName()
-        pages?.eachWithIndex{ obj, i ->
-            println "($i) $obj"
-        }
-    }
-
-    def listReferencedProductionClasses(){
-        println "<Referenced production classes>"
-        def classes =  visitor?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
-        classes?.eachWithIndex{ obj, i ->
-            println "($i) $obj.name"
-        }
     }
 
 }

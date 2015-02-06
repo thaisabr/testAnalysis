@@ -3,6 +3,7 @@ package analyser
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.control.SourceUnit
+import utils.Utils
 
 class PageCodeVisitor extends ClassCodeVisitorSupport {
     SourceUnit source
@@ -11,11 +12,12 @@ class PageCodeVisitor extends ClassCodeVisitorSupport {
     def projectDir
     static final PAGE_FIELD = "url" //name convention
 
-    public PageCodeVisitor(List projectFiles, String projectDir){
+    public PageCodeVisitor(Collection projectFiles){
         this.source = null
         this.pages = [] as Set
         this.projectFiles = projectFiles
-        this.projectDir = projectDir
+        def config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
+        this.projectDir = config.project.path
     }
 
     @Override

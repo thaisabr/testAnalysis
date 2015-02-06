@@ -1,31 +1,23 @@
 package analyser
 
+import data.ScenarioInterface
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
+import utils.Utils
 
 class Visitor extends ClassCodeVisitorSupport {
     SourceUnit source
-    def referencedClasses
-    def calledMethods
-    def staticFields
-    def fields
-    def accessedProperties
-    def calledPageMethods
+    ScenarioInterface scenarioInterface
     def className
     def projectFiles //valid files
 
-    public Visitor (String name, List projectFiles){
+    public Visitor (String name, Collection projectFiles){
         this.source = null
-        this.referencedClasses = [] as Set
-        this.calledMethods = [] as Set
-        this.staticFields = [] as Set
-        this.fields = [] as Set
-        this.accessedProperties = [] as Set
-        this.calledPageMethods = [] as Set
         this.className = name
         this.projectFiles = projectFiles
+        this.scenarioInterface = new ScenarioInterface()
     }
 
     private registryMethodCall(MethodCallExpression call){
@@ -33,7 +25,7 @@ class Visitor extends ClassCodeVisitorSupport {
         def className = call.receiver.type.name.replace("[L", "") //deals with
         className = className.replace(";","")
         if( Utils.isValidClass(className, projectFiles) ) {
-            calledMethods += [name:call.methodAsString, type:className]
+            scenarioInterface.calledMethods += [name:call.methodAsString, type:className]
             result = true
         }
         result
@@ -44,7 +36,7 @@ class Visitor extends ClassCodeVisitorSupport {
         if (call.implicitThis && Utils.isValidMethod(call.methodAsString)) { //call from test code
             if( Utils.isPageMethod(call.methodAsString) ){
                 def value = call.arguments.text
-                calledPageMethods += [name: call.methodAsString, arg:value.substring(1,value.length()-1)]
+                scenarioInterface.calledPageMethods += [name: call.methodAsString, arg:value.substring(1,value.length()-1)]
             }
             /*else {
                 //calls for other methods do not need to be registered
@@ -59,7 +51,7 @@ class Visitor extends ClassCodeVisitorSupport {
         def result = false
         if(!call.implicitThis) { //call from other class
             if (call.receiver.dynamicTyped) {
-                calledMethods += [name: call.methodAsString, type: null]
+                scenarioInterface.calledMethods += [name: call.methodAsString, type: null]
                 result = true
             } else {
                 result = registryMethodCall(call)
@@ -86,7 +78,7 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitConstructorCallExpression(ConstructorCallExpression call){
         super.visitConstructorCallExpression(call)
-        if( Utils.isValidClass(call?.type?.name, projectFiles) ) referencedClasses += [name: call?.type?.name]
+        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.referencedClasses += [name: call?.type?.name]
     }
 
     @Override
@@ -97,8 +89,8 @@ class Visitor extends ClassCodeVisitorSupport {
             case ConstructorCallExpression.class: //composite call that includes constructor call
                 // ex: def path = new File(".").getCanonicalPath() + File.separator + "test" + File.separator + "files" + File.separator + "TCS.pdf"
                 if (Utils.isValidClass(call.receiver.type.name, projectFiles)) {
-                    referencedClasses += [name: call.receiver.type.name]
-                    calledMethods += [name:call.methodAsString, type:call.objectExpression.type.name]
+                    scenarioInterface.referencedClasses += [name: call.receiver.type.name]
+                    scenarioInterface.calledMethods += [name:call.methodAsString, type:call.objectExpression.type.name]
                 }
                 break
             case VariableExpression.class: //call that uses a reference variable
@@ -122,7 +114,7 @@ class Visitor extends ClassCodeVisitorSupport {
     public void visitStaticMethodCallExpression(StaticMethodCallExpression call){
         super.visitStaticMethodCallExpression(call)
         if (Utils.isValidClass(call.ownerType.name, projectFiles)){
-            calledMethods += [name:call.methodAsString, type:call.ownerType.name]
+            scenarioInterface.calledMethods += [name:call.methodAsString, type:call.ownerType.name]
         }
     }
 
@@ -130,8 +122,8 @@ class Visitor extends ClassCodeVisitorSupport {
     public void visitField(FieldNode node){
         super.visitField(node)
         def result = [name:node.name, type:node.type.name, value:node.initialValueExpression.value]
-        if(node.static) staticFields += result
-        else fields += result
+        if(node.static) scenarioInterface.staticFields += result
+        else scenarioInterface.fields += result
     }
 
     @Override
@@ -139,7 +131,7 @@ class Visitor extends ClassCodeVisitorSupport {
     public void visitPropertyExpression(PropertyExpression expression){
         super.visitPropertyExpression(expression)
         if ( Utils.isValidClass(expression.objectExpression.type.name, projectFiles) ){
-            accessedProperties += [name:expression.propertyAsString, type:expression.objectExpression.type.name]
+            scenarioInterface.accessedProperties += [name:expression.propertyAsString, type:expression.objectExpression.type.name]
         }
     }
 
