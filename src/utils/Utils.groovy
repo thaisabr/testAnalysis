@@ -12,6 +12,7 @@ class Utils {
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     static final PAGE_METHODS = ['to', 'at']
     static final CONFIG_FILE_NAME = 'Config.groovy'
+    static final INTERFACES_PATH = ".${File.separator}interfaces${File.separator}"
     //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     static boolean isValidClassByAPI(String referencedClass){
@@ -57,7 +58,15 @@ class Utils {
         f.eachDirRecurse{ dir ->
             files += dir.listFiles().findAll{it.isFile()}*.absolutePath
         }
+        f.eachFile{
+            files += it.absolutePath
+        }
         files
+    }
+
+    static getGroovyFilesFromDirectory(String directory){
+        def files = getFilesFromDirectory(directory)
+        files.findAll{it.contains(GROOVY_FILENAME_EXTENSION)}
     }
 
     static getJarFilesFromDirectory(String directory){
@@ -100,7 +109,7 @@ class Utils {
     static getInterfaceFileName(String path){
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)
-        name - GROOVY_FILENAME_EXTENSION + INTERFACE_FILENAME_EXTENSION
+        INTERFACES_PATH + (name - GROOVY_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION
     }
 
 }
