@@ -98,6 +98,7 @@ class Visitor extends ClassCodeVisitorSupport {
                 if(!result) registryIsExternalValidMethodCall(call)
                 break
             case MethodCallExpression.class: //composite call that does not include constructor call
+            case StaticMethodCallExpression.class: //composite static call
             case PropertyExpression.class:
             case ClassExpression.class: //static method call from another class that uses the class name
                 registryMethodCall(call)
