@@ -36,7 +36,7 @@ class ScenarioInterfaceManager {
 
     private listReferencedClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Referenced classes:\n")
+            out.write("<Referenced classes: ${scenarioInterface?.referencedClasses?.size()}>\n")
             scenarioInterface?.referencedClasses?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name\n")
             }
@@ -46,7 +46,7 @@ class ScenarioInterfaceManager {
 
     private listCalledMethods(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Called methods:\n")
+            out.write("<Called methods: ${scenarioInterface?.calledMethods?.size()}>\n")
             scenarioInterface?.calledMethods?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
             }
@@ -56,7 +56,7 @@ class ScenarioInterfaceManager {
 
     private listFields(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Fields:\n")
+            out.write("<Fields: ${scenarioInterface?.fields?.size()}>\n")
             scenarioInterface?.fields?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type: $obj.value\n")
             }
@@ -66,7 +66,7 @@ class ScenarioInterfaceManager {
 
     private listProperties(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Properties:\n")
+            out.write("<Properties: ${scenarioInterface?.accessedProperties?.size()}>\n")
             scenarioInterface?.accessedProperties?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
             }
@@ -76,7 +76,7 @@ class ScenarioInterfaceManager {
 
     private listStaticFields(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Static fields:\n")
+            out.write("<Static fields: ${scenarioInterface?.staticFields?.size()}>\n")
             scenarioInterface?.staticFields?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type: $obj.value\n")
             }
@@ -86,7 +86,7 @@ class ScenarioInterfaceManager {
 
     private listCalledPageMethods(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("Called page methods:\n")
+            out.write("<Called page methods: ${scenarioInterface?.calledPageMethods?.size()}>\n")
             scenarioInterface?.calledPageMethods?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.arg\n")
             }
@@ -96,8 +96,8 @@ class ScenarioInterfaceManager {
 
     private listCalledProductionMethods(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Called production Methods>\n")
             def methods = scenarioInterface?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+            out.write("<Called production Methods: ${methods?.size()}>\n")
             methods?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
             }
@@ -107,8 +107,8 @@ class ScenarioInterfaceManager {
 
     private listReferencedProductionClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Referenced production classes>\n")
             def classes =  scenarioInterface?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
+            out.write("<Referenced production classes: ${classes?.size()}>\n")
             classes?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name\n")
             }
@@ -118,7 +118,7 @@ class ScenarioInterfaceManager {
 
     private listGSP(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Referenced production GSP files>\n")
+            out.write("<Referenced production GSP files: ${ scenarioInterface?.referencedPages?.size()}>\n")
             scenarioInterface?.referencedPages?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj\n")
             }
