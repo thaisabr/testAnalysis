@@ -9,6 +9,7 @@ import utils.Utils
 
 
 class ClassAnalyser {
+    def analysedFile
     def config
     Collection projectFiles
     List pluginsPath
@@ -17,14 +18,21 @@ class ClassAnalyser {
     ScenarioInterfaceManager interfaceManager
 
     public ClassAnalyser(){
-        this.config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
-        this.projectFiles = Utils.getFilesFromDirectory(config.project.path)
-        this.pluginsPath = []
+        config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
+        analysedFile = config.project.test.file
+        projectFiles = Utils.getFilesFromDirectory(config.project.path)
+        pluginsPath = []
         config.grails.plugin.path?.each{ k, v ->
-            this.pluginsPath += v
+            pluginsPath += v
         }
         configureClassLoader()
-        this.interfaceManager = new ScenarioInterfaceManager(config.project.test.file)
+        interfaceManager = new ScenarioInterfaceManager(analysedFile)
+    }
+
+    public ClassAnalyser(String fileToAnalyse){
+        this()
+        analysedFile = fileToAnalyse
+        interfaceManager = new ScenarioInterfaceManager(analysedFile)
     }
 
     private generateAst(String path){
@@ -82,13 +90,12 @@ class ClassAnalyser {
     private getMethodsToVisit(String className, String file, Collection visitedFiles){
         def methods = visitor?.scenarioInterface?.calledMethods?.findAll{it.type == className}?.sort{it.name}
         methods = methods*.name
-        def alreadyVisitedFile = visitedFiles?.find{ it.path == file }
-
-        if(alreadyVisitedFile){
-            if(alreadyVisitedFile.methods != methods){
-                methods = (alreadyVisitedFile.methods+methods as Set).sort()
-            }
-            else{
+        def index = visitedFiles?.findLastIndexOf{ it.path == file }
+        if(index != -1) {
+            def alreadyVisitedFile = visitedFiles[index]
+            if (alreadyVisitedFile.methods != methods) {
+                methods = (alreadyVisitedFile.methods + methods as Set).sort()
+            } else {
                 methods = []
             }
         }
@@ -125,7 +132,7 @@ class ClassAnalyser {
     }
 
     private doBasicAnalysis(){
-        def ast = generateAst(config.project.test.file)
+        def ast = generateAst(analysedFile)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
         classNode.visitContents(visitor)
@@ -155,8 +162,9 @@ class ClassAnalyser {
         interfaceManager.generateScenarioInterface(visitor.scenarioInterface)
 
         println "Visited files during indirect analysis: "
-        visitedFiles.each{ arq ->
-            println arq.path
+        def aux = (visitedFiles*.path as Set).sort()
+        aux.each{ file ->
+            println file
         }
         println "---------------------------------------------------------------------------------"
     }
