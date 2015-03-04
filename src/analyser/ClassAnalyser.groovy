@@ -74,21 +74,8 @@ class ClassAnalyser {
         }
     }
 
-    private getExternalValidClasses(int index){
-        def externalValidClasses = []
-
-        def set = visitor?.scenarioInterface?.calledMethods*.type as Set
-        if(set.isEmpty()) externalValidClasses
-
-        def list = set as List
-        def classes = list?.subList(index, list.size())
-        externalValidClasses = classes?.findAll{ it!= null && Utils.isTestCode(it) }
-
-        externalValidClasses
-    }
-
-    private getMethodsToVisit(String className, String file, Collection visitedFiles){
-        def methods = visitor?.scenarioInterface?.calledMethods?.findAll{it.type == className}?.sort{it.name}
+    private getMethodsToVisit(String className, String file, Collection lastCalledMethods, Collection visitedFiles){
+        def methods = lastCalledMethods?.findAll{it.type == className}?.sort{it.name}
         methods = methods*.name
         def index = visitedFiles?.findLastIndexOf{ it.path == file }
         if(index != -1) {
@@ -103,14 +90,15 @@ class ClassAnalyser {
         methods
     }
 
-    private listFilesToVisit(int index, Collection visitedFiles){
+    private listFilesToVisit(Collection lastCalledMethods, Collection allVisitedFiles){
         def files = []
-        def externalValidClasses = getExternalValidClasses(index)
+        def externalValidClasses = lastCalledMethods*.type as Set
+        externalValidClasses = externalValidClasses?.findAll { it != null && Utils.isTestCode(it) }
 
         externalValidClasses.each{ className ->
             def file = Utils.getClassPath(className, projectFiles)
             if(file){
-                def methods = getMethodsToVisit(className, file, visitedFiles)
+                def methods = getMethodsToVisit(className, file, lastCalledMethods, allVisitedFiles)
                 if(!methods.isEmpty()) files += [path:file, methods:methods] //file to analyse and its methods
             }
         }
@@ -147,15 +135,17 @@ class ClassAnalyser {
         def visitedFiles = []
         if(!visitor) doBasicAnalysis()
 
-        def files = listFilesToVisit(0, visitedFiles)
+        def files = listFilesToVisit(visitor.scenarioInterface.calledMethods, visitedFiles)
         while(!files.isEmpty()) {
+            def backupCalledMethods = visitor.scenarioInterface.calledMethods
             files.each { f ->
                 def ast = generateAst(f.path)
                 def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                 ast.classes.get(0).visitContents(auxVisitor)
             }
             visitedFiles += files
-            files = listFilesToVisit(files.size(), visitedFiles)
+            def lastCalledMethods = visitor.scenarioInterface.calledMethods - backupCalledMethods
+            files = listFilesToVisit(lastCalledMethods, visitedFiles)
         }
 
         extractGSPClassesName()
