@@ -7,13 +7,16 @@ class Utils {
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
+    static final FEATURE_FILENAME_EXTENSION = ".feature"
     static final INTERFACE_FILENAME_EXTENSION = "Interface.txt"
+    static final JSON_FILENAME_EXTENSION = ".json"
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     static final PAGE_METHODS = ['to', 'at']
     static final CONFIG_FILE_NAME = 'Config.groovy'
     static final INTERFACES_PATH = ".${File.separator}interfaces${File.separator}"
-    //static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
+    static final JSON_PATH = ".${File.separator}json${File.separator}"
+    static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     static boolean isValidClassByAPI(String referencedClass){
         if(INVALID_CLASS_REGEX) {
@@ -110,6 +113,12 @@ class Utils {
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)
         INTERFACES_PATH + (name - GROOVY_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION
+    }
+
+    static getJsonFileName(String path){
+        def beginIndex = path.lastIndexOf(File.separator)
+        def name = path.substring(beginIndex+1)
+        JSON_PATH + (name - FEATURE_FILENAME_EXTENSION) + JSON_FILENAME_EXTENSION
     }
 
 }
