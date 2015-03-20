@@ -115,6 +115,12 @@ class Utils {
         INTERFACES_PATH + (name - GROOVY_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION
     }
 
+    static getInterfaceFileName(String path, String scenarioName){
+        def beginIndex = path.lastIndexOf(File.separator)
+        def name = path.substring(beginIndex+1)
+        INTERFACES_PATH + (name - FEATURE_FILENAME_EXTENSION) +"-"+ scenarioName.replace(" ", "_") +"-"+ INTERFACE_FILENAME_EXTENSION
+    }
+
     static getJsonFileName(String path){
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)

@@ -13,6 +13,11 @@ class ScenarioInterfaceManager {
         writeText("Code to analyse: ${path}\n")
     }
 
+    public ScenarioInterfaceManager(String featurePath, String scenarioName){
+        this.file = new File(Utils.getInterfaceFileName(featurePath, scenarioName))
+        writeText("Code to analyse: ${featurePath}, scenario: $scenarioName\n")
+    }
+
     def generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
         listReferencedClasses(scenarioInterface)
         listCalledMethods(scenarioInterface)

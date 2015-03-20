@@ -1,5 +1,8 @@
 package scenarioStepsMatcher
 
+import data.Match
+import data.Scenario
+import data.StepDefinition
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
@@ -23,7 +26,7 @@ class TestCodeParser {
         configureClassLoader()
     }
 
-    def getStepsDefinition(String featurePath){
+    def getFeatureCode(String featurePath){
         def regexList = parseStepsDefinitionFiles()
 
         def jsonPath = Utils.getJsonFileName(featurePath)
@@ -34,45 +37,47 @@ class TestCodeParser {
         scenarios.each{ scenario ->
             def result = []
             scenario.steps.each { step ->
-                def match = regexList.findAll{ step.name ==~ it.exp}
-                if(match && match.size()==1) {
-                    result += [stepLine:step.line, stepDefFile:match.file, stepDefLine:match.line, stepDefLastLine:match.lastLine]
+                def matchedRegex = regexList.findAll{ step.name ==~ it.regex}
+                if(matchedRegex && matchedRegex.size()==1) {
+                    def match = matchedRegex[0]
+                    result += new Match(stepLine:step.line, stepDefinition:match)
+                            //[stepLine:step.line, stepDefFile:matchedRegex.file, stepDefLine:matchedRegex.line, stepDefLastLine:matchedRegex.lastLine]
                 }
                 else result += null
             }
 
             //when it is not possible to match any step to a step definition the result is null
-            if( result.contains(null) ) totalResult += [featureFile: featurePath, scenario:scenario.name, match: null]
-            else totalResult += [featureFile: featurePath, scenario:scenario.name, match: result]
+            if( result.contains(null) ) totalResult += new Scenario(name:scenario.name, line:scenario.line, file: featurePath, testcode:null)
+            else totalResult += new Scenario(name:scenario.name, line:scenario.line, file: featurePath, testcode:result)
         }
 
         totalResult
     }
 
-    def getStepsDefinition(String featurePath, int scenarioLine){
+    def Scenario getScenarioCode(String featurePath, int scenarioLine){
         def regexList = parseStepsDefinitionFiles()
 
         def jsonPath = Utils.getJsonFileName(featurePath)
         ParserGherkinJson.parse(featurePath, jsonPath)
-        def scenario = ParserGherkinJson.getScenario(scenarioLine, jsonPath)
+        def scenarioGherkin = ParserGherkinJson.getScenario(scenarioLine, jsonPath)
 
-        def result = []
-        scenario.steps.each { step ->
-            def match = regexList.findAll{ step.name ==~ it.exp}
-            if(match && match.size()==1){
-                result += [featureFile: featurePath, scenario:scenario.name, stepLine:step.line, stepDefFile:match.file,
-                           stepDefLine:match.line, stepDefLastLine:match.lastLine]
+        List<Match> result = []
+        scenarioGherkin.steps.each { step ->
+            def matchedRegex = regexList.findAll{ step.name ==~ it.regex}
+            if(matchedRegex && matchedRegex.size()==1){
+                def match = matchedRegex[0]
+                result += new Match(stepLine:step.line, stepDefinition:match)
             }
             else result += null
         }
 
         //when it is not possible to match any step to a step definition the result is null
         if( result.contains(null) ) null
-        else result
+        else new Scenario(name:scenarioGherkin.name, line:scenarioLine, file: featurePath, testcode:result)
     }
 
     def parseStepsDefinitionFiles(){
-        def regexs = []
+        List<StepDefinition> regexs = []
         stepsDefinitionFiles.each{ file ->
             def ast = generateAst(file)
             def visitor = new StepDefinitionVisitor(file)
