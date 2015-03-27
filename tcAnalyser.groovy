@@ -1,4 +1,4 @@
-import analyser.ClassAnalyser
+import stepsFileParser.ClassAnalyser
 import analyser.ScenarioAnalyser
 
 //Parsing a groovy file

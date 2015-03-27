@@ -1,6 +1,5 @@
 package output
 
-import data.ScenarioInterface
 import utils.Utils
 
 

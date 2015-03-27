@@ -1,10 +1,10 @@
 package analyser
 
-import data.ScenarioInterface
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
+import output.ScenarioInterface
 import utils.Utils
 
 class Visitor extends ClassCodeVisitorSupport {

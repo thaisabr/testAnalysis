@@ -1,8 +1,5 @@
-package scenarioStepsMatcher
+package scenarioParser
 
-import data.Match
-import data.Scenario
-import data.StepDefinition
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
@@ -28,10 +25,7 @@ class TestCodeParser {
 
     def getFeatureCode(String featurePath){
         def regexList = parseStepsDefinitionFiles()
-
-        def jsonPath = Utils.getJsonFileName(featurePath)
-        ParserGherkinJson.parse(featurePath, jsonPath)
-        def scenarios = ParserGherkinJson.getAllScenarios(jsonPath)
+        def scenarios = ParserGherkinJson.getAllScenarios(featurePath)
 
         def totalResult = []
         scenarios.each{ scenario ->
@@ -56,10 +50,7 @@ class TestCodeParser {
 
     def Scenario getScenarioCode(String featurePath, int scenarioLine){
         def regexList = parseStepsDefinitionFiles()
-
-        def jsonPath = Utils.getJsonFileName(featurePath)
-        ParserGherkinJson.parse(featurePath, jsonPath)
-        def scenarioGherkin = ParserGherkinJson.getScenario(scenarioLine, jsonPath)
+        def scenarioGherkin = ParserGherkinJson.getScenario(featurePath, scenarioLine)
 
         List<Match> result = []
         scenarioGherkin.steps.each { step ->

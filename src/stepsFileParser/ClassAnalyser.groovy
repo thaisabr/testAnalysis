@@ -1,5 +1,8 @@
-package analyser
+package stepsFileParser
 
+import analyser.MethodVisitor
+import analyser.PageCodeVisitor
+import analyser.Visitor
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
@@ -74,7 +77,7 @@ class ClassAnalyser {
         }
     }
 
-    private getMethodsToVisit(String className, String file, Collection lastCalledMethods, Collection visitedFiles){
+    private static getMethodsToVisit(String className, String file, Collection lastCalledMethods, Collection visitedFiles){
         def methods = lastCalledMethods?.findAll{it.type == className}?.sort{it.name}
         methods = methods*.name
         def index = visitedFiles?.findLastIndexOf{ it.path == file }

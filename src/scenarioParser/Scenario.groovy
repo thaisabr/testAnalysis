@@ -1,5 +1,4 @@
-package data
-
+package scenarioParser
 
 class Scenario {
 

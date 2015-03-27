@@ -1,6 +1,5 @@
-package scenarioStepsMatcher
+package scenarioParser
 
-import data.StepDefinition
 import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.expr.StaticMethodCallExpression
 import org.codehaus.groovy.control.SourceUnit
