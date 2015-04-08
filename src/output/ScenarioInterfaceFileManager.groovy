@@ -3,16 +3,16 @@ package output
 import utils.Utils
 
 
-class ScenarioInterfaceManager {
+class ScenarioInterfaceFileManager {
 
     File file
 
-    public ScenarioInterfaceManager(String path){
+    public ScenarioInterfaceFileManager(String path){
         this.file = new File(Utils.getInterfaceFileName(path))
         writeText("Code to analyse: ${path}\n")
     }
 
-    public ScenarioInterfaceManager(String featurePath, String scenarioName){
+    public ScenarioInterfaceFileManager(String featurePath, String scenarioName){
         this.file = new File(Utils.getInterfaceFileName(featurePath, scenarioName))
         writeText("Code to analyse: ${featurePath}, scenario: $scenarioName\n")
     }
@@ -26,7 +26,7 @@ class ScenarioInterfaceManager {
         listCalledPageMethods(scenarioInterface)
     }
 
-    def generateScenarioInterface(ScenarioInterface scenarioInterface){
+    def updateScenarioInterfaceFile(ScenarioInterface scenarioInterface){
         listCalledProductionMethods(scenarioInterface)
         listReferencedProductionClasses(scenarioInterface)
         listGSP(scenarioInterface)

@@ -4,7 +4,7 @@ import scenarioParser.Scenario
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
-import output.ScenarioInterfaceManager
+import output.ScenarioInterfaceFileManager
 import scenarioParser.TestCodeParser
 import utils.Utils
 
@@ -90,6 +90,7 @@ class ScenarioAnalyser {
     def analyseScenario(String featurePath, int line){
         def scenario = parser.getScenarioCode(featurePath, line)
         def firstStepFiles = getFilesToAnalyse(scenario)
+        def interfaceManager = new ScenarioInterfaceFileManager(featurePath, scenario.name)
 
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
@@ -109,8 +110,7 @@ class ScenarioAnalyser {
             }
 
             extractGSPClassesName(visitor)
-            def interfaceManager = new ScenarioInterfaceManager(featurePath, scenario.name)
-            interfaceManager.generateScenarioInterface(visitor.scenarioInterface)
+            interfaceManager.updateScenarioInterfaceFile(visitor.scenarioInterface)
 
             println "Visited files during indirect analysis: "
             def aux = (visitedFiles*.path as Set).sort()
@@ -120,6 +120,7 @@ class ScenarioAnalyser {
             println "---------------------------------------------------------------------------------"
         }
 
+        //return finalScenarioInterface
     }
 
     private listFilesToVisit(Collection lastCalledMethods, Collection allVisitedFiles){
