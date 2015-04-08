@@ -100,7 +100,7 @@ class ScenarioInterfaceManager {
 
     private listCalledProductionMethods(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            def methods = scenarioInterface?.calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+            def methods = scenarioInterface?.getProductionCalledMethods()
             out.write("<Called production Methods: ${methods?.size()}>\n")
             methods?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
