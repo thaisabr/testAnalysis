@@ -22,7 +22,7 @@ class ParserGherkinJson {
 
     static getAllScenarios(String featurePath){
         def jsonPath = Utils.getJsonFileName(featurePath)
-        ParserGherkinJson.parse(featurePath, jsonPath)
+        parse(featurePath, jsonPath)
         def slurper = new JsonSlurper()
         File file = new File(jsonPath)
         def result = slurper.parse(new FileReader(file))

@@ -9,8 +9,8 @@ analyser.doIndirectAnalysis()
 def scenarioAnalyser = new ScenarioAnalyser()
 def featurePath = "${System.getProperty("user.home")}${File.separator}Documents${File.separator}GitHub" +
         "${File.separator}rgms${File.separator}test${File.separator}cucumber${File.separator}Book.feature"
-scenarioAnalyser.analyseScenario(featurePath, 7)
+scenarioAnalyser.generateTaskInterfacesForScenario(featurePath, 7)
 
 //Parsing a feature (all its scenarios)
-scenarioAnalyser.analyseFeature(featurePath)
+scenarioAnalyser.generateTaskInterfacesForFeature(featurePath)
 
