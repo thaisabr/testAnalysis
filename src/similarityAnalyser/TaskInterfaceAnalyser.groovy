@@ -22,7 +22,7 @@ class TaskInterfaceAnalyser {
 
     private static calculateJaccardIndex(Set set1, Set set2){
         if(!set1 || !set2 || set1.isEmpty() || set2.isEmpty()) 0
-        else set1.intersect(set2)/(set1+set2)
+        else (set1.intersect(set2)).size()/(set1+set2).size()
     }
 
 }
