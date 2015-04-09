@@ -23,7 +23,7 @@ class TestCodeParser {
         configureClassLoader()
     }
 
-    def getFeatureCode(String featurePath){
+    public List<Scenario> getFeatureCode(String featurePath){
         def regexList = parseStepsDefinitionFiles()
         def scenarios = ParserGherkinJson.getAllScenarios(featurePath)
 
@@ -31,11 +31,10 @@ class TestCodeParser {
         scenarios.each{ scenario ->
             def result = []
             scenario.steps.each { step ->
-                def matchedRegex = regexList.findAll{ step.name ==~ it.regex}
+                def matchedRegex = regexList.findAll{ step.name ==~ it.regex }
                 if(matchedRegex && matchedRegex.size()==1) {
                     def match = matchedRegex[0]
                     result += new Match(stepLine:step.line, stepDefinition:match)
-                            //[stepLine:step.line, stepDefFile:matchedRegex.file, stepDefLine:matchedRegex.line, stepDefLastLine:matchedRegex.lastLine]
                 }
                 else result += null
             }
@@ -48,7 +47,7 @@ class TestCodeParser {
         totalResult
     }
 
-    def Scenario getScenarioCode(String featurePath, int scenarioLine){
+    public Scenario getScenarioCode(String featurePath, int scenarioLine){
         def regexList = parseStepsDefinitionFiles()
         def scenarioGherkin = ParserGherkinJson.getScenario(featurePath, scenarioLine)
 

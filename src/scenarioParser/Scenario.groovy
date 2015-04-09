@@ -9,7 +9,7 @@ class Scenario {
 
     @Override
     public String toString(){
-        "[name: $name, line:$line, file:$file, testcode:$testcode"
+        "name: $name, line:$line, file:$file, testcode:$testcode"
     }
 
 }
