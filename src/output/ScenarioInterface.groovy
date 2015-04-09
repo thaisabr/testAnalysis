@@ -40,4 +40,14 @@ class ScenarioInterface {
         staticFields+fields
     }
 
+    def update(ScenarioInterface scenarioInterface){
+        this.referencedClasses += scenarioInterface.referencedClasses
+        this.calledMethods += scenarioInterface.calledMethods
+        this.staticFields += scenarioInterface.staticFields
+        this.fields += scenarioInterface.fields
+        this.accessedProperties += scenarioInterface.accessedProperties
+        this.calledPageMethods += scenarioInterface.calledPageMethods
+        this.referencedPages += scenarioInterface.referencedPages
+    }
+
 }

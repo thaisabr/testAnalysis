@@ -1,5 +1,6 @@
 package analyser
 
+import output.ScenarioInterface
 import scenarioParser.Scenario
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
@@ -87,10 +88,10 @@ class ScenarioAnalyser {
         visitor
     }
 
-    def analyseScenario(String featurePath, int line){
-        def scenario = parser.getScenarioCode(featurePath, line)
+    def analyseScenario(Scenario scenario){
         def firstStepFiles = getFilesToAnalyse(scenario)
-        def interfaceManager = new ScenarioInterfaceFileManager(featurePath, scenario.name)
+        def interfaceManager = new ScenarioInterfaceFileManager(scenario.file, scenario.name)
+        def scenarioInterface = new ScenarioInterface()
 
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
@@ -110,7 +111,7 @@ class ScenarioAnalyser {
             }
 
             extractGSPClassesName(visitor)
-            interfaceManager.updateScenarioInterfaceFile(visitor.scenarioInterface)
+            scenarioInterface.update(visitor.scenarioInterface)
 
             println "Visited files during indirect analysis: "
             def aux = (visitedFiles*.path as Set).sort()
@@ -120,7 +121,46 @@ class ScenarioAnalyser {
             println "---------------------------------------------------------------------------------"
         }
 
-        //return finalScenarioInterface
+        interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
+        return scenarioInterface
+    }
+
+    def analyseScenario(String featurePath, int line){
+        def scenario = parser.getScenarioCode(featurePath, line)
+        def firstStepFiles = getFilesToAnalyse(scenario)
+        def interfaceManager = new ScenarioInterfaceFileManager(featurePath, scenario.name)
+        def scenarioInterface = new ScenarioInterface()
+
+        firstStepFiles.each { stepFile ->
+            def visitor = doFirstLevelAnalysis(stepFile)
+            def visitedFiles = []
+            def files = listFilesToVisit(visitor.scenarioInterface.calledMethods, visitedFiles)
+
+            while (!files.isEmpty()) {
+                def backupCalledMethods = visitor.scenarioInterface.calledMethods
+                files.each { f ->
+                    def ast = generateAst(f.path)
+                    def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
+                    ast.classes.get(0).visitContents(auxVisitor)
+                }
+                visitedFiles += files
+                def lastCalledMethods = visitor.scenarioInterface.calledMethods - backupCalledMethods
+                files = listFilesToVisit(lastCalledMethods, visitedFiles)
+            }
+
+            extractGSPClassesName(visitor)
+            scenarioInterface.update(visitor.scenarioInterface)
+
+            println "Visited files during indirect analysis: "
+            def aux = (visitedFiles*.path as Set).sort()
+            aux.each{ file ->
+                println file
+            }
+            println "---------------------------------------------------------------------------------"
+        }
+
+        interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
+        return scenarioInterface
     }
 
     private listFilesToVisit(Collection lastCalledMethods, Collection allVisitedFiles){
@@ -169,10 +209,13 @@ class ScenarioAnalyser {
     }
 
     def analyseFeature(String featurePath){
+        def scenarioInterfaces = []
         def scenarios = parser.getFeatureCode(featurePath)
         scenarios.each { scenario ->
-            analyseScenario(scenario.file, scenario.line)
+            def scenarioInterface = analyseScenario(scenario)
+            scenarioInterfaces += [scenario:scenario, interface:scenarioInterface]
         }
+        return scenarioInterfaces
     }
 
 }
