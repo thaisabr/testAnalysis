@@ -1,9 +1,9 @@
-package similarityAnalyser
+package similarityAnalysis
 
 import output.ScenarioInterface
 
 
-class TaskInterfaceAnalyser {
+class TaskInterfaceSimilarityAnalyser {
 
     /* How to interpret different similarity measures? */
     static calculateSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
@@ -15,9 +15,20 @@ class TaskInterfaceAnalyser {
         [classIndex:refClassIndex, methodIndex:prodCalledMethodIndex, decFieldIndex:declaredFieldIndex, fieldIndex:accessedPropIndex]
     }
 
-    //todo: compare files of scenario interface
-    static calculateSimilarity(File interface1, File interface2){
+    static calculateReferencedClassSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.referencedClasses, scen2.referencedClasses)
+    }
 
+    static calculateCalledMethodSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.getProductionCalledMethods(), scen2.getProductionCalledMethods())
+    }
+
+    static calculateDeclaredFieldSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.getDeclaredFields(), scen2.getDeclaredFields())
+    }
+
+    static calculateAccessedPropSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.accessedProperties, scen2.accessedProperties)
     }
 
     private static calculateJaccardIndex(Set set1, Set set2){
