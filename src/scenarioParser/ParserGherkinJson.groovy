@@ -25,7 +25,9 @@ class ParserGherkinJson {
         parse(featurePath, jsonPath)
         def slurper = new JsonSlurper()
         File file = new File(jsonPath)
-        def result = slurper.parse(new FileReader(file))
+        FileReader fileReader = new FileReader(file)
+        def result = slurper.parse(fileReader)
+        fileReader.close()
         file.deleteOnExit()
         result.elements[0].findAll{ it.type == "scenario"} //other type = scenario output (improve it)
     }
