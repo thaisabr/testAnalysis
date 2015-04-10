@@ -1,4 +1,4 @@
-package similarityAnalysis
+package similarity
 
 import output.ScenarioInterface
 
