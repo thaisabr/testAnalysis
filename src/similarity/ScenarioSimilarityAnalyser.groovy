@@ -2,6 +2,8 @@ package similarity
 
 import org.apache.commons.math3.linear.ArrayRealVector
 import org.apache.commons.math3.linear.RealVector
+import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.TermsEnum
 import org.apache.lucene.util.BytesRef
 import org.apache.lucene.index.Terms
@@ -10,7 +12,7 @@ import org.apache.lucene.index.Terms
 class ScenarioSimilarityAnalyser {
 
     IndexManager indexManager
-    SearchManager searchManager
+    IndexReader reader
     Set terms
 
     private configureIndexManager(String path1, int line1, String path2, int line2){
@@ -22,7 +24,7 @@ class ScenarioSimilarityAnalyser {
     double calculateSimilarity(String path1, int line1, String path2, int line2){
         terms = [] as Set
         configureIndexManager(path1, line1, path2, line2)
-        searchManager = new SearchManager(indexManager)
+        reader = DirectoryReader.open(indexManager.indexDirectory)
 
         def freqVectorScenario1 = getTermFrequencies(0).sort()
         println "vector1: $freqVectorScenario1"
@@ -36,7 +38,7 @@ class ScenarioSimilarityAnalyser {
     }
 
     private getTermFrequencies(int docId){
-        Terms vector = searchManager.reader.getTermVector(docId, "content")
+        Terms vector = reader.getTermVector(docId, "content")
         TermsEnum termsEnum = null
         termsEnum = vector.iterator(termsEnum)
 
