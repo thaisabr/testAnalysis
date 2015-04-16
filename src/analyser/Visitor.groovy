@@ -78,7 +78,7 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitConstructorCallExpression(ConstructorCallExpression call){
         super.visitConstructorCallExpression(call)
-        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.referencedClasses += [name: call?.type?.name]
+        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.referencedClasses += call?.type?.name
     }
 
     @Override
@@ -89,7 +89,7 @@ class Visitor extends ClassCodeVisitorSupport {
             case ConstructorCallExpression.class: //composite call that includes constructor call
                 // ex: def path = new File(".").getCanonicalPath() + File.separator + "test" + File.separator + "files" + File.separator + "TCS.pdf"
                 if (Utils.isValidClass(call.receiver.type.name, projectFiles)) {
-                    scenarioInterface.referencedClasses += [name: call.receiver.type.name]
+                    scenarioInterface.referencedClasses += call.receiver.type.name
                     scenarioInterface.calledMethods += [name:call.methodAsString, type:call.objectExpression.type.name]
                 }
                 break
