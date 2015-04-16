@@ -7,12 +7,14 @@ class TaskInterfaceSimilarityAnalyser {
 
     /* How to interpret different similarity measures? */
     static calculateSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
-        def refClassIndex = calculateJaccardIndex(scen1.referencedClasses, scen2.referencedClasses)
+        def relClassIndex = calculateJaccardIndex(scen1.getRelevantClasses(), scen2.getRelevantClasses())
         def prodCalledMethodIndex = calculateJaccardIndex(scen1.getProductionCalledMethods(), scen2.getProductionCalledMethods())
-        def declaredFieldIndex = calculateJaccardIndex(scen1.getDeclaredFields(), scen2.getDeclaredFields())
-        def accessedPropIndex = calculateJaccardIndex(scen1.accessedProperties, scen2.accessedProperties)
+        def files = calculateJaccardIndex(scen1.referencedPages, scen2.referencedPages)
+        [classIndex:relClassIndex, methodIndex:prodCalledMethodIndex, filesIndex:files]
+    }
 
-        [classIndex:refClassIndex, methodIndex:prodCalledMethodIndex, decFieldIndex:declaredFieldIndex, fieldIndex:accessedPropIndex]
+    static calculateRelevantClassSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.getRelevantClasses(), scen2.getRelevantClasses())
     }
 
     static calculateReferencedClassSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
@@ -29,6 +31,10 @@ class TaskInterfaceSimilarityAnalyser {
 
     static calculateAccessedPropSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
         calculateJaccardIndex(scen1.accessedProperties, scen2.accessedProperties)
+    }
+
+    static calculateReferencedPages(ScenarioInterface scen1, ScenarioInterface scen2){
+        calculateJaccardIndex(scen1.referencedPages, scen2.referencedPages)
     }
 
     private static calculateJaccardIndex(Set set1, Set set2){

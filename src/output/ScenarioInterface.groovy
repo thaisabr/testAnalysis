@@ -40,6 +40,12 @@ class ScenarioInterface {
         staticFields+fields
     }
 
+    public Set getRelevantClasses(){
+        def classes =  referencedClasses?.findAll{ !Utils.isTestCode(it) }
+        def methods = productionCalledMethods*.type as Set
+        (classes+methods as Set).sort()
+    }
+
     def update(ScenarioInterface scenarioInterface){
         this.referencedClasses += scenarioInterface.referencedClasses
         this.calledMethods += scenarioInterface.calledMethods

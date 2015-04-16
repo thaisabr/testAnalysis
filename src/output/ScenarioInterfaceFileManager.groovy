@@ -29,6 +29,7 @@ class ScenarioInterfaceFileManager {
     def updateScenarioInterfaceFile(ScenarioInterface scenarioInterface){
         listCalledProductionMethods(scenarioInterface)
         listReferencedProductionClasses(scenarioInterface)
+        listRelevantProductionClasses(scenarioInterface)
         listGSP(scenarioInterface)
     }
 
@@ -42,7 +43,7 @@ class ScenarioInterfaceFileManager {
         file.withWriterAppend{ out ->
             out.write("<Referenced classes: ${scenarioInterface?.referencedClasses?.size()}>\n")
             scenarioInterface?.referencedClasses?.eachWithIndex{ obj, i ->
-                out.write("(${i+1}) $obj.name\n")
+                out.write("(${i+1}) $obj\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
         }
@@ -111,10 +112,20 @@ class ScenarioInterfaceFileManager {
 
     private listReferencedProductionClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            def classes =  scenarioInterface?.referencedClasses?.findAll{ !Utils.isTestCode(it.name) }
+            def classes =  scenarioInterface?.referencedClasses?.findAll{ !Utils.isTestCode(it) }
             out.write("<Referenced production classes: ${classes?.size()}>\n")
             classes?.eachWithIndex{ obj, i ->
-                out.write("(${i+1}) $obj.name\n")
+                out.write("(${i+1}) $obj\n")
+            }
+            out.write("---------------------------------------------------------------------------------\n")
+        }
+    }
+
+    private listRelevantProductionClasses(ScenarioInterface scenarioInterface){
+       file.withWriterAppend{ out ->
+            out.write("<Relevant production classes: ${scenarioInterface.relevantClasses?.size()}>\n")
+            scenarioInterface.relevantClasses?.eachWithIndex{ obj, i ->
+                out.write("(${i+1}) $obj\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
         }
