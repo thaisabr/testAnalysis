@@ -5,8 +5,8 @@ import utils.Utils
 
 class ScenarioInterface {
 
-    Set referencedClasses //instantiated classes
-    Set calledMethods //static and non-static called methods
+    Set classes //instantiated classes
+    Set methods //static and non-static called methods
     Set staticFields //declared static fields
     Set fields //declared fields
     Set accessedProperties //accessed fields
@@ -17,8 +17,8 @@ class ScenarioInterface {
     /******************************************************************************************************************/
 
     public ScenarioInterface(){
-        this.referencedClasses = [] as Set
-        this.calledMethods = [] as Set
+        this.classes = [] as Set
+        this.methods = [] as Set
         this.staticFields = [] as Set
         this.fields = [] as Set
         this.accessedProperties = [] as Set
@@ -28,12 +28,12 @@ class ScenarioInterface {
 
     /*At the moment, it is considered only the information that is necessary for similarity measure.*/
     public int size(){
-        referencedClasses?.size() + getProductionCalledMethods()?.size() + getDeclaredFields()?.size() +
+        classes?.size() + getProductionCalledMethods()?.size() + getDeclaredFields()?.size() +
         accessedProperties?.size()
     }
 
     public Set getProductionCalledMethods(){
-        calledMethods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+        methods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
     }
 
     public Set getDeclaredFields(){
@@ -41,14 +41,18 @@ class ScenarioInterface {
     }
 
     public Set getRelevantClasses(){
-        def classes =  referencedClasses?.findAll{ !Utils.isTestCode(it) }
+        def classes =  classes?.findAll{ !Utils.isTestCode(it) }
         def methods = productionCalledMethods*.type as Set
         (classes+methods as Set).sort()
     }
 
+    public Set getRelevantFiles(){
+        (getRelevantClasses()+referencedPages).sort()
+    }
+
     def update(ScenarioInterface scenarioInterface){
-        this.referencedClasses += scenarioInterface.referencedClasses
-        this.calledMethods += scenarioInterface.calledMethods
+        this.classes += scenarioInterface.classes
+        this.methods += scenarioInterface.methods
         this.staticFields += scenarioInterface.staticFields
         this.fields += scenarioInterface.fields
         this.accessedProperties += scenarioInterface.accessedProperties

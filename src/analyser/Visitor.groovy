@@ -25,7 +25,7 @@ class Visitor extends ClassCodeVisitorSupport {
         def className = call.receiver.type.name.replace("[L", "") //deals with
         className = className.replace(";","")
         if( Utils.isValidClass(className, projectFiles) ) {
-            scenarioInterface.calledMethods += [name:call.methodAsString, type:className]
+            scenarioInterface.methods += [name:call.methodAsString, type:className]
             result = true
         }
         result
@@ -40,7 +40,7 @@ class Visitor extends ClassCodeVisitorSupport {
             }
             /*else {
                 //calls for other methods do not need to be registered
-                //calledMethods += [name: call.methodAsString, type: className]
+                //methods += [name: call.methodAsString, type: className]
             }*/
             result = true
         }
@@ -51,7 +51,7 @@ class Visitor extends ClassCodeVisitorSupport {
         def result = false
         if(!call.implicitThis) { //call from other class
             if (call.receiver.dynamicTyped) {
-                scenarioInterface.calledMethods += [name: call.methodAsString, type: null]
+                scenarioInterface.methods += [name: call.methodAsString, type: null]
                 result = true
             } else {
                 result = registryMethodCall(call)
@@ -78,7 +78,7 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitConstructorCallExpression(ConstructorCallExpression call){
         super.visitConstructorCallExpression(call)
-        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.referencedClasses += call?.type?.name
+        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.classes += call?.type?.name
     }
 
     @Override
@@ -89,8 +89,8 @@ class Visitor extends ClassCodeVisitorSupport {
             case ConstructorCallExpression.class: //composite call that includes constructor call
                 // ex: def path = new File(".").getCanonicalPath() + File.separator + "test" + File.separator + "files" + File.separator + "TCS.pdf"
                 if (Utils.isValidClass(call.receiver.type.name, projectFiles)) {
-                    scenarioInterface.referencedClasses += call.receiver.type.name
-                    scenarioInterface.calledMethods += [name:call.methodAsString, type:call.objectExpression.type.name]
+                    scenarioInterface.classes += call.receiver.type.name
+                    scenarioInterface.methods += [name:call.methodAsString, type:call.objectExpression.type.name]
                 }
                 break
             case VariableExpression.class: //call that uses a reference variable
@@ -115,7 +115,7 @@ class Visitor extends ClassCodeVisitorSupport {
     public void visitStaticMethodCallExpression(StaticMethodCallExpression call){
         super.visitStaticMethodCallExpression(call)
         if (Utils.isValidClass(call.ownerType.name, projectFiles)){
-            scenarioInterface.calledMethods += [name:call.methodAsString, type:call.ownerType.name]
+            scenarioInterface.methods += [name:call.methodAsString, type:call.ownerType.name]
         }
     }
 

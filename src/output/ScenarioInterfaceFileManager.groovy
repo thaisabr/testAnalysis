@@ -17,22 +17,6 @@ class ScenarioInterfaceFileManager {
         writeText("Code to analyse: ${featurePath}, scenario: $scenarioName\n")
     }
 
-    def generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
-        listReferencedClasses(scenarioInterface)
-        listCalledMethods(scenarioInterface)
-        listFields(scenarioInterface)
-        listProperties(scenarioInterface)
-        listStaticFields(scenarioInterface)
-        listCalledPageMethods(scenarioInterface)
-    }
-
-    def updateScenarioInterfaceFile(ScenarioInterface scenarioInterface){
-        listCalledProductionMethods(scenarioInterface)
-        listReferencedProductionClasses(scenarioInterface)
-        listRelevantProductionClasses(scenarioInterface)
-        listGSP(scenarioInterface)
-    }
-
     private writeText(String text){
         file.withWriterAppend { out ->
             out.write(text+"\n")
@@ -41,8 +25,8 @@ class ScenarioInterfaceFileManager {
 
     private listReferencedClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Referenced classes: ${scenarioInterface?.referencedClasses?.size()}>\n")
-            scenarioInterface?.referencedClasses?.eachWithIndex{ obj, i ->
+            out.write("<Referenced classes: ${scenarioInterface?.classes?.size()}>\n")
+            scenarioInterface?.classes?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
@@ -51,8 +35,8 @@ class ScenarioInterfaceFileManager {
 
     private listCalledMethods(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Called methods: ${scenarioInterface?.calledMethods?.size()}>\n")
-            scenarioInterface?.calledMethods?.eachWithIndex{ obj, i ->
+            out.write("<Called methods: ${scenarioInterface?.methods?.size()}>\n")
+            scenarioInterface?.methods?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
@@ -112,7 +96,7 @@ class ScenarioInterfaceFileManager {
 
     private listReferencedProductionClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            def classes =  scenarioInterface?.referencedClasses?.findAll{ !Utils.isTestCode(it) }
+            def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it) }
             out.write("<Referenced production classes: ${classes?.size()}>\n")
             classes?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj\n")
@@ -139,6 +123,22 @@ class ScenarioInterfaceFileManager {
             }
             out.write("---------------------------------------------------------------------------------\n")
         }
+    }
+
+    def generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
+        listReferencedClasses(scenarioInterface)
+        listCalledMethods(scenarioInterface)
+        listFields(scenarioInterface)
+        listProperties(scenarioInterface)
+        listStaticFields(scenarioInterface)
+        listCalledPageMethods(scenarioInterface)
+    }
+
+    def updateScenarioInterfaceFile(ScenarioInterface scenarioInterface){
+        listCalledProductionMethods(scenarioInterface)
+        listReferencedProductionClasses(scenarioInterface)
+        listRelevantProductionClasses(scenarioInterface)
+        listGSP(scenarioInterface)
     }
 
 }

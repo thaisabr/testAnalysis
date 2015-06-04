@@ -138,16 +138,16 @@ class ClassAnalyser {
         def visitedFiles = []
         if(!visitor) doBasicAnalysis()
 
-        def files = listFilesToVisit(visitor.scenarioInterface.calledMethods, visitedFiles)
+        def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
         while(!files.isEmpty()) {
-            def backupCalledMethods = visitor.scenarioInterface.calledMethods
+            def backupCalledMethods = visitor.scenarioInterface.methods
             files.each { f ->
                 def ast = generateAst(f.path)
                 def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                 ast.classes.get(0).visitContents(auxVisitor)
             }
             visitedFiles += files
-            def lastCalledMethods = visitor.scenarioInterface.calledMethods - backupCalledMethods
+            def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
             files = listFilesToVisit(lastCalledMethods, visitedFiles)
         }
 
