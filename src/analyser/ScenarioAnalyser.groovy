@@ -133,7 +133,7 @@ class ScenarioAnalyser {
         visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
     }
 
-    def generateTaskInterfacesForFeature(String featurePath){
+    List<ScenarioInterface> generateTaskInterfacesForFeature(String featurePath){
         def scenarioInterfaces = []
         def scenarios = parser.getFeatureCode(featurePath)
         scenarios.each { scenario ->
@@ -143,7 +143,7 @@ class ScenarioAnalyser {
         return scenarioInterfaces
     }
 
-    def generateTaskInterfacesForScenario(Scenario scenario){
+    ScenarioInterface generateTaskInterfacesForScenario(Scenario scenario){
         def firstStepFiles = getFilesToAnalyse(scenario)
         def interfaceManager = new ScenarioInterfaceFileManager(scenario.file, scenario.name)
         def scenarioInterface = new ScenarioInterface()
@@ -151,36 +151,29 @@ class ScenarioAnalyser {
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
             def visitedFiles = []
-            def files = listFilesToVisit(visitor.scenarioInterface.calledMethods, visitedFiles)
+            def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
 
             while (!files.isEmpty()) {
-                def backupCalledMethods = visitor.scenarioInterface.calledMethods
+                def backupCalledMethods = visitor.scenarioInterface.methods
                 files.each { f ->
                     def ast = generateAst(f.path)
                     def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                     ast.classes.get(0).visitContents(auxVisitor)
                 }
                 visitedFiles += files
-                def lastCalledMethods = visitor.scenarioInterface.calledMethods - backupCalledMethods
+                def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
                 files = listFilesToVisit(lastCalledMethods, visitedFiles)
             }
 
             extractGSPClassesName(visitor)
             scenarioInterface.update(visitor.scenarioInterface)
-
-            println "Visited files during indirect analysis: "
-            def aux = (visitedFiles*.path as Set).sort()
-            aux.each{ file ->
-                println file
-            }
-            println "---------------------------------------------------------------------------------"
         }
 
         interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
         return scenarioInterface
     }
 
-    def generateTaskInterfacesForScenario(String featurePath, int line){
+    ScenarioInterface generateTaskInterfacesForScenario(String featurePath, int line){
         def scenario = parser.getScenarioCode(featurePath, line)
         def firstStepFiles = getFilesToAnalyse(scenario)
         def interfaceManager = new ScenarioInterfaceFileManager(featurePath, scenario.name)
@@ -189,29 +182,22 @@ class ScenarioAnalyser {
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
             def visitedFiles = []
-            def files = listFilesToVisit(visitor.scenarioInterface.calledMethods, visitedFiles)
+            def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
 
             while (!files.isEmpty()) {
-                def backupCalledMethods = visitor.scenarioInterface.calledMethods
+                def backupCalledMethods = visitor.scenarioInterface.methods
                 files.each { f ->
                     def ast = generateAst(f.path)
                     def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
                     ast.classes.get(0).visitContents(auxVisitor)
                 }
                 visitedFiles += files
-                def lastCalledMethods = visitor.scenarioInterface.calledMethods - backupCalledMethods
+                def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
                 files = listFilesToVisit(lastCalledMethods, visitedFiles)
             }
 
             extractGSPClassesName(visitor)
             scenarioInterface.update(visitor.scenarioInterface)
-
-            println "Visited files during indirect analysis: "
-            def aux = (visitedFiles*.path as Set).sort()
-            aux.each{ file ->
-                println file
-            }
-            println "---------------------------------------------------------------------------------"
         }
 
         interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
