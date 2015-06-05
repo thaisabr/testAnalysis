@@ -4,6 +4,7 @@ import org.springframework.util.ClassUtils
 
 class Utils {
 
+    static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("Config.groovy"))
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
@@ -13,7 +14,6 @@ class Utils {
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     static final PAGE_METHODS = ['to', 'at']
-    static final CONFIG_FILE_NAME = 'Config.groovy'
     static final INTERFACES_PATH = ".${File.separator}interfaces${File.separator}"
     static final JSON_PATH = ".${File.separator}json${File.separator}"
     static final STEPS = ['Given', 'When', 'Then', 'And', 'But']

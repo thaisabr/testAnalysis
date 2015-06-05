@@ -16,8 +16,7 @@ class PageCodeVisitor extends ClassCodeVisitorSupport {
         this.source = null
         this.pages = [] as Set
         this.projectFiles = projectFiles
-        def config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
-        this.projectDir = config.project.path
+        this.projectDir = Utils.config.project.path
     }
 
     @Override

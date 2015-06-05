@@ -27,26 +27,26 @@ class ScenarioInterface {
     }
 
     /*At the moment, it is considered only the information that is necessary for similarity measure.*/
-    public int size(){
+    int size(){
         classes?.size() + getProductionCalledMethods()?.size() + getDeclaredFields()?.size() +
         accessedProperties?.size()
     }
 
-    public Set getProductionCalledMethods(){
+    Set getProductionCalledMethods(){
         methods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
     }
 
-    public Set getDeclaredFields(){
+    Set getDeclaredFields(){
         staticFields+fields
     }
 
-    public Set getRelevantClasses(){
+    Set getRelevantClasses(){
         def classes =  classes?.findAll{ !Utils.isTestCode(it) }
         def methods = productionCalledMethods*.type as Set
         (classes+methods as Set).sort()
     }
 
-    public Set getRelevantFiles(){
+    Set getRelevantFiles(){
         (getRelevantClasses()+referencedPages).sort()
     }
 

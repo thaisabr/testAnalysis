@@ -8,16 +8,14 @@ import utils.Utils
 
 class TestCodeParser {
 
-    def config
     GroovyClassLoader classLoader
     Collection stepsDefinitionFiles
     List pluginsPath
 
     public TestCodeParser(){
-        config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
-        stepsDefinitionFiles = Utils.getGroovyFilesFromDirectory(config.project.test.steps.path)
+        stepsDefinitionFiles = Utils.getGroovyFilesFromDirectory(Utils.config.project.test.steps.path)
         pluginsPath = []
-        config.grails.plugin.path?.each{ k, v ->
+        Utils.config.grails.plugin.path?.each{ k, v ->
             pluginsPath += v
         }
         configureClassLoader()
@@ -90,13 +88,13 @@ class TestCodeParser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
         configurePlugins()
-        classLoader.addClasspath(config.project.production.path) //compiled code files
-        classLoader.addClasspath(config.project.test.path) //compiled test code
+        classLoader.addClasspath(Utils.config.project.production.path) //compiled code files
+        classLoader.addClasspath(Utils.config.project.test.path) //compiled test code
     }
 
     private configurePlugins(){
         if(pluginsPath.isEmpty()){
-            def jars = Utils.getJarFilesFromDirectory(config.grails.dependencyCache)
+            def jars = Utils.getJarFilesFromDirectory(Utils.config.grails.dependencyCache)
             jars?.each{
                 classLoader.addClasspath(it)
             }

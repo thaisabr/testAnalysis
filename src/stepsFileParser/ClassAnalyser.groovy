@@ -13,7 +13,6 @@ import utils.Utils
 
 class ClassAnalyser {
     def analysedFile
-    def config
     Collection projectFiles
     List pluginsPath
     GroovyClassLoader classLoader
@@ -21,11 +20,10 @@ class ClassAnalyser {
     ScenarioInterfaceFileManager interfaceManager
 
     public ClassAnalyser(){
-        config = new ConfigSlurper().parse(new File(Utils.CONFIG_FILE_NAME).toURI().toURL())
-        analysedFile = config.project.test.file
-        projectFiles = Utils.getFilesFromDirectory(config.project.path)
+        analysedFile = Utils.config.project.test.file
+        projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
         pluginsPath = []
-        config.grails.plugin.path?.each{ k, v ->
+        Utils.config.grails.plugin.path?.each{ k, v ->
             pluginsPath += v
         }
         configureClassLoader()
@@ -53,17 +51,17 @@ class ClassAnalyser {
         configurePlugins()
 
         //compiled code files
-        classLoader.addClasspath(config.project.production.path)
-        println "Compiled code path: ${config.project.production.path}"
+        classLoader.addClasspath(Utils.config.project.production.path)
+        println "Compiled code path: ${Utils.config.project.production.path}"
 
         //compiled test code
-        classLoader.addClasspath(config.project.test.path)
-        println "Compiled test code path: ${config.project.test.path}"
+        classLoader.addClasspath(Utils.config.project.test.path)
+        println "Compiled test code path: ${Utils.config.project.test.path}"
     }
 
     private configurePlugins(){
         if(pluginsPath.isEmpty()){
-            def jars = Utils.getJarFilesFromDirectory(config.grails.dependencyCache)
+            def jars = Utils.getJarFilesFromDirectory(Utils.config.grails.dependencyCache)
             jars?.each{
                 classLoader.addClasspath(it)
                 println "jar: $it"
