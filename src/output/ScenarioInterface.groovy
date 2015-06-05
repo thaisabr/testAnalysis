@@ -11,7 +11,7 @@ class ScenarioInterface {
     Set fields //declared fields
     Set accessedProperties //accessed fields
 
-    /****************************************** Specific to web-based tests *******************************************/
+    /************** Specific to web-based tests. When we have a GSP parser such code should be removed! ***************/
     def calledPageMethods //help to identify referenced pages (GSP files); methods "to" and "at"
     def referencedPages
     /******************************************************************************************************************/

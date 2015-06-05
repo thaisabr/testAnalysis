@@ -133,17 +133,17 @@ class ScenarioAnalyser {
         visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
     }
 
-    List<ScenarioInterface> generateTaskInterfacesForFeature(String featurePath){
+    List<ScenarioInterface> computeTaskInterfacesForFeature(String featurePath){
         def scenarioInterfaces = []
         def scenarios = parser.getFeatureCode(featurePath)
         scenarios.each { scenario ->
-            def scenarioInterface = generateTaskInterfacesForScenario(scenario)
+            def scenarioInterface = computeTaskInterface(scenario)
             scenarioInterfaces += [scenario:scenario, interface:scenarioInterface]
         }
         return scenarioInterfaces
     }
 
-    ScenarioInterface generateTaskInterfacesForScenario(Scenario scenario){
+    ScenarioInterface computeTaskInterface(Scenario scenario){
         def firstStepFiles = getFilesToAnalyse(scenario)
         def interfaceManager = new ScenarioInterfaceFileManager(scenario.file, scenario.name)
         def scenarioInterface = new ScenarioInterface()
@@ -173,7 +173,7 @@ class ScenarioAnalyser {
         return scenarioInterface
     }
 
-    ScenarioInterface generateTaskInterfacesForScenario(String featurePath, int line){
+    ScenarioInterface computeTaskInterface(String featurePath, int line){
         def scenario = parser.getScenarioCode(featurePath, line)
         def firstStepFiles = getFilesToAnalyse(scenario)
         def interfaceManager = new ScenarioInterfaceFileManager(featurePath, scenario.name)
