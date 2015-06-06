@@ -202,4 +202,70 @@ class ScenarioAnalyser {
         return scenarioInterface
     }
 
+    ScenarioInterface computeTaskInterface(){
+        def scenario = parser.getScenarioCode(Utils.config.scenario.path, Utils.config.scenario.line)
+        def firstStepFiles = getFilesToAnalyse(scenario)
+        def interfaceManager = new ScenarioInterfaceFileManager(Utils.config.scenario.path, scenario.name)
+        def scenarioInterface = new ScenarioInterface()
+
+        firstStepFiles.each { stepFile ->
+            def visitor = doFirstLevelAnalysis(stepFile)
+            def visitedFiles = []
+            def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
+
+            while (!files.isEmpty()) {
+                def backupCalledMethods = visitor.scenarioInterface.methods
+                files.each { f ->
+                    def ast = generateAst(f.path)
+                    def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
+                    ast.classes.get(0).visitContents(auxVisitor)
+                }
+                visitedFiles += files
+                def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
+                files = listFilesToVisit(lastCalledMethods, visitedFiles)
+            }
+
+            extractGSPClassesName(visitor)
+            scenarioInterface.update(visitor.scenarioInterface)
+        }
+
+        interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
+        return scenarioInterface
+    }
+
+    List<ScenarioInterface> computeTaskInterfaces(){
+        def interfaces = []
+        Utils.config.scenario.lines.each{ scenarioLine ->
+            def scenario = parser.getScenarioCode(Utils.config.scenario.path, scenarioLine)
+            def firstStepFiles = getFilesToAnalyse(scenario)
+            def interfaceManager = new ScenarioInterfaceFileManager(Utils.config.scenario.path, scenario.name)
+            def scenarioInterface = new ScenarioInterface()
+
+            firstStepFiles.each { stepFile ->
+                def visitor = doFirstLevelAnalysis(stepFile)
+                def visitedFiles = []
+                def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
+
+                while (!files.isEmpty()) {
+                    def backupCalledMethods = visitor.scenarioInterface.methods
+                    files.each { f ->
+                        def ast = generateAst(f.path)
+                        def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
+                        ast.classes.get(0).visitContents(auxVisitor)
+                    }
+                    visitedFiles += files
+                    def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
+                    files = listFilesToVisit(lastCalledMethods, visitedFiles)
+                }
+
+                extractGSPClassesName(visitor)
+                scenarioInterface.update(visitor.scenarioInterface)
+            }
+
+            interfaceManager.updateScenarioInterfaceFile(scenarioInterface)
+            interfaces += scenarioInterface
+        }
+        return interfaces
+    }
+
 }
