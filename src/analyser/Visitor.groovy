@@ -4,8 +4,8 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
-import output.ScenarioInterface
 import utils.Utils
+import output.ScenarioInterface
 
 class Visitor extends ClassCodeVisitorSupport {
     SourceUnit source

@@ -20,7 +20,7 @@ class ClassAnalyser {
     ScenarioInterfaceFileManager interfaceManager
 
     public ClassAnalyser(){
-        analysedFile = Utils.config.project.test.file
+        analysedFile = Utils.config.test.file
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
         pluginsPath = []
         Utils.config.grails.plugin.path?.each{ k, v ->

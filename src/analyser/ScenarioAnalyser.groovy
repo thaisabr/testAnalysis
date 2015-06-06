@@ -1,13 +1,13 @@
 package analyser
 
-import output.ScenarioInterface
-import scenarioParser.Scenario
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
-import output.ScenarioInterfaceFileManager
-import scenarioParser.TestCodeParser
 import utils.Utils
+import output.ScenarioInterface
+import output.ScenarioInterfaceFileManager
+import scenarioParser.Scenario
+import scenarioParser.TestCodeParser
 
 
 class ScenarioAnalyser {
