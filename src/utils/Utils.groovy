@@ -14,8 +14,8 @@ class Utils {
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
     static final PAGE_METHODS = ['to', 'at']
-    static final INTERFACES_PATH = ".${File.separator}interfaces${File.separator}"
-    static final JSON_PATH = ".${File.separator}json${File.separator}"
+    static final INTERFACES_PATH = "${System.getProperty("user.dir")}${File.separator}interfaces${File.separator}"
+    static final JSON_PATH = "${System.getProperty("user.dir")}${File.separator}json${File.separator}"
     static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
     static boolean isValidClassByAPI(String referencedClass){
