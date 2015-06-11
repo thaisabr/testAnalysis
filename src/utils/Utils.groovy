@@ -1,18 +1,22 @@
 package utils
 
 import org.springframework.util.ClassUtils
+import java.util.regex.Matcher
+
 
 class Utils {
 
     static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("Config.groovy"))
-    static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
+    static final PROJECT_PATH = config.project.path
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
     static final FEATURE_FILENAME_EXTENSION = ".feature"
     static final INTERFACE_FILENAME_EXTENSION = "Interface.txt"
     static final JSON_FILENAME_EXTENSION = ".json"
+    static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
     static final INVALID_METHOD_REGEX = /(println|print|setBinding)/
+    static final FILE_SEPARATOR_REGEX = /(\\|\/)/
     static final PAGE_METHODS = ['to', 'at']
     static final INTERFACES_PATH = "${System.getProperty("user.dir")}${File.separator}interfaces${File.separator}"
     static final JSON_PATH = "${System.getProperty("user.dir")}${File.separator}json${File.separator}"
@@ -27,7 +31,7 @@ class Utils {
     }
 
     static boolean isValidClass(String referencedClass, List projectFiles){
-        if(isValidClassByProject(referencedClass, projectFiles) && isValidClassByAPI(referencedClass)){
+        if(isValidClassByAPI(referencedClass) && isValidClassByProject(referencedClass, projectFiles)){
             true
         }
         else false
@@ -44,25 +48,31 @@ class Utils {
     }
 
     static boolean isValidClassByProject(String referencedClass, List projectFiles){
+        def result = true
+        //def filename = ClassUtils.convertClassNameToResourcePath(referencedClass)
         if(projectFiles){
-            def result = projectFiles?.find{ name ->
+            //result = projectFiles?.find{ it == filename } ? true : false
+            def searchResult = projectFiles?.find{ name ->
                 def aux = ClassUtils.convertResourcePathToClassName(name)
                 aux ==~ /.*$referencedClass\$GROOVY_FILENAME_EXTENSION/
             }
-            if (result) true
-            else false
+            if (!searchResult) result = false
         }
-        else true
+        return result
     }
 
     static getFilesFromDirectory(String directory){
         def f = new File(directory)
         def files = []
         f.eachDirRecurse{ dir ->
-            files += dir.listFiles().findAll{it.isFile()}*.absolutePath
+            dir.listFiles().each{
+                if(it.isFile()){
+                    files += it.absolutePath.replaceAll(FILE_SEPARATOR_REGEX, Matcher.quoteReplacement(File.separator))
+                }
+            }
         }
         f.eachFile{
-            files += it.absolutePath
+            files += it.absolutePath.replaceAll(FILE_SEPARATOR_REGEX, Matcher.quoteReplacement(File.separator))
         }
         files
     }
@@ -87,15 +97,18 @@ class Utils {
 
     static String getClassPath(String className, Collection projectFiles){
         def name = ClassUtils.convertClassNameToResourcePath(className)+GROOVY_FILENAME_EXTENSION
-        name = name.replace("/", File.separator)
-        name = name.replace("\\", File.separator)
+        name = name.replaceAll(FILE_SEPARATOR_REGEX, Matcher.quoteReplacement(File.separator))
         projectFiles?.find{it.contains(name)}
     }
 
-    static String getGspPath(String resourcePath, List projectFiles, String projectDir){
-        def name = resourcePath.replace("/", File.separator)
-        name = name.replace("\\", File.separator)
+    static getClassPathToCompare(String className, Collection projectFiles){
+        def filename = getClassPath(className, projectFiles)
+        def projectname = "${PROJECT_PATH}"
+        return (filename - projectname).substring(1)
+    }
 
+    static String getGspPath(String resourcePath, List projectFiles, String projectDir){
+        def name = resourcePath.replaceAll(FILE_SEPARATOR_REGEX, Matcher.quoteReplacement(File.separator))
         int n = name.count(File.separator)
         if(n>1){
             def index = name.lastIndexOf(File.separator)

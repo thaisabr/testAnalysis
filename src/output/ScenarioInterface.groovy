@@ -5,6 +5,7 @@ import utils.Utils
 
 class ScenarioInterface {
 
+    Set files
     Set classes //instantiated classes
     Set methods //static and non-static called methods
     Set staticFields //declared static fields
@@ -17,6 +18,7 @@ class ScenarioInterface {
     /******************************************************************************************************************/
 
     public ScenarioInterface(){
+        this.files = [] as Set
         this.classes = [] as Set
         this.methods = [] as Set
         this.staticFields = [] as Set
@@ -46,11 +48,17 @@ class ScenarioInterface {
         (classes+methods as Set).sort()
     }
 
-    Set getRelevantFiles(){
-        (getRelevantClasses()+referencedPages).sort()
+    Set getRelevantFiles(Collection projectFiles){
+        def relevantFiles = []
+        def allfiles = getRelevantClasses()+referencedPages
+        allfiles.each{
+            relevantFiles += Utils.getClassPathToCompare(it, projectFiles)
+        }
+        return relevantFiles.sort()
     }
 
     def update(ScenarioInterface scenarioInterface){
+        this.files += scenarioInterface.files
         this.classes += scenarioInterface.classes
         this.methods += scenarioInterface.methods
         this.staticFields += scenarioInterface.staticFields

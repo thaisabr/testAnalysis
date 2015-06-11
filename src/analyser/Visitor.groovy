@@ -4,6 +4,7 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
+import org.springframework.util.ClassUtils
 import utils.Utils
 import output.ScenarioInterface
 
@@ -22,8 +23,10 @@ class Visitor extends ClassCodeVisitorSupport {
 
     private registryMethodCall(MethodCallExpression call){
         def result = false
-        def className = call.receiver.type.name.replace("[L", "") //deals with
-        className = className.replace(";","")
+        def className = call.receiver.type.name
+        if (className.startsWith(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX) && className.endsWith(";")) {
+            className = className.substring(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX.length(), className.length() - 1)
+        }
         if( Utils.isValidClass(className, projectFiles) ) {
             scenarioInterface.methods += [name:call.methodAsString, type:className]
             result = true
