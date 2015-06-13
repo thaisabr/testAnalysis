@@ -101,10 +101,10 @@ class Utils {
         projectFiles?.find{it.contains(name)}
     }
 
-    static getClassPathToCompare(String className, Collection projectFiles){
+    static String getShortClassPath(String className, Collection projectFiles){
         def filename = getClassPath(className, projectFiles)
-        def projectname = "${PROJECT_PATH}"
-        return (filename - projectname).substring(1)
+        if(!filename?.isEmpty()) return (filename - PROJECT_PATH).substring(1)
+        else return ""
     }
 
     static String getGspPath(String resourcePath, List projectFiles, String projectDir){

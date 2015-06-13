@@ -52,7 +52,7 @@ class ScenarioInterface {
         def relevantFiles = []
         def allfiles = getRelevantClasses()+referencedPages
         allfiles.each{
-            relevantFiles += Utils.getClassPathToCompare(it, projectFiles)
+            relevantFiles += Utils.getShortClassPath(it, projectFiles)
         }
         return relevantFiles.sort()
     }
