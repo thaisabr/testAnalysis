@@ -23,6 +23,7 @@ class ClassAnalyser {
 
     public ClassAnalyser(){
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
+        pluginsPath = []
         configureClassLoader()
         analysedFile = Utils.config.test.file
         interfaceManager = new FileManager(analysedFile)
@@ -32,13 +33,6 @@ class ClassAnalyser {
         this()
         analysedFile = fileToAnalyse
         interfaceManager = new FileManager(analysedFile)
-    }
-
-    private fillPluginsPath(){
-        pluginsPath = []
-        Utils.config.grails.plugin.path?.each{ k, v ->
-            pluginsPath += v
-        }
     }
 
     private generateAst(String path){
@@ -53,7 +47,7 @@ class ClassAnalyser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
 
-        fillPluginsPath()
+        Utils.fillPluginsPath(pluginsPath)
         configurePlugins()
 
         //compiled code files

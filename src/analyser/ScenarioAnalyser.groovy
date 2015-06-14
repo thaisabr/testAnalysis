@@ -20,9 +20,6 @@ class ScenarioAnalyser {
     public ScenarioAnalyser(){
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
         pluginsPath = []
-        Utils.config.grails.plugin.path?.each{ k, v ->
-            pluginsPath += v
-        }
         configureClassLoader()
         parser = new TestCodeParser()
     }
@@ -30,6 +27,7 @@ class ScenarioAnalyser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
 
+        Utils.fillPluginsPath(pluginsPath)
         configurePlugins()
 
         //compiled code files

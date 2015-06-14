@@ -22,6 +22,12 @@ class Utils {
     static final JSON_PATH = "${System.getProperty("user.dir")}${File.separator}json${File.separator}"
     static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
+    static fillPluginsPath(List pluginsPath){
+        config.grails.plugin.path?.each{ k, v ->
+            pluginsPath += v
+        }
+    }
+
     static boolean isValidClassByAPI(String referencedClass){
         if(INVALID_CLASS_REGEX) {
             if(referencedClass ==~ INVALID_CLASS_REGEX) false
