@@ -32,6 +32,7 @@ class Utils {
         if (className.startsWith(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX) && className.endsWith(";")) {
             className = className.substring(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX.length(), className.length() - 1)
         }
+        return className
     }
 
     static boolean isValidClassByAPI(String referencedClass){
