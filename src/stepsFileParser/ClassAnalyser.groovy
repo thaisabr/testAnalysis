@@ -7,7 +7,9 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
-import output.ScenarioInterfaceFileManager
+import output.ConsoleManager
+import output.FileManager
+import output.ScenarioInterfaceManager
 import utils.Utils
 
 
@@ -17,19 +19,19 @@ class ClassAnalyser {
     List pluginsPath
     GroovyClassLoader classLoader
     Visitor visitor
-    ScenarioInterfaceFileManager interfaceManager
+    ScenarioInterfaceManager interfaceManager
 
     public ClassAnalyser(){
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
         configureClassLoader()
         analysedFile = Utils.config.test.file
-        interfaceManager = new ScenarioInterfaceFileManager(analysedFile)
+        interfaceManager = new FileManager(analysedFile)
     }
 
     public ClassAnalyser(String fileToAnalyse){
         this()
         analysedFile = fileToAnalyse
-        interfaceManager = new ScenarioInterfaceFileManager(analysedFile)
+        interfaceManager = new FileManager(analysedFile)
     }
 
     private fillPluginsPath(){
@@ -133,7 +135,7 @@ class ClassAnalyser {
 
     def doDirectAnalysis(){
         doFirstLevelAnalysis()
-        interfaceManager.updateScenarioInterfaceFile(visitor.scenarioInterface)
+        interfaceManager.updateScenarioInterfaceOutput(visitor.scenarioInterface)
     }
 
     def doIndirectAnalysis(){
@@ -154,7 +156,7 @@ class ClassAnalyser {
         }
 
         extractGSPClassesName()
-        interfaceManager.updateScenarioInterfaceFile(visitor.scenarioInterface)
+        interfaceManager.updateScenarioInterfaceOutput(visitor.scenarioInterface)
 
         println "Visited files during indirect analysis: "
         def aux = (visitedFiles*.path as Set).sort()

@@ -3,16 +3,16 @@ package output
 import utils.Utils
 
 
-class ScenarioInterfaceFileManager {
+class FileManager implements ScenarioInterfaceManager {
 
     File file
 
-    public ScenarioInterfaceFileManager(String path){
+    public FileManager(String path){
         this.file = new File(Utils.getInterfaceFileName(path))
         writeText("Code to analyse: ${Utils.getShortClassPath(path)}\n")
     }
 
-    public ScenarioInterfaceFileManager(String featurePath, String scenarioName){
+    public FileManager(String featurePath, String scenarioName){
         this.file = new File(Utils.getInterfaceFileName(featurePath, scenarioName))
         writeText("Code to analyse: ${Utils.getShortClassPath(featurePath)}, scenario: $scenarioName\n")
     }
@@ -125,7 +125,8 @@ class ScenarioInterfaceFileManager {
         }
     }
 
-    def generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
+    @Override
+    void generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
         listReferencedClasses(scenarioInterface)
         listCalledMethods(scenarioInterface)
         listFields(scenarioInterface)
@@ -134,7 +135,8 @@ class ScenarioInterfaceFileManager {
         listCalledPageMethods(scenarioInterface)
     }
 
-    def updateScenarioInterfaceFile(ScenarioInterface scenarioInterface){
+    @Override
+    void updateScenarioInterfaceOutput(ScenarioInterface scenarioInterface){
         listCalledProductionMethods(scenarioInterface)
         listReferencedProductionClasses(scenarioInterface)
         listRelevantProductionClasses(scenarioInterface)
