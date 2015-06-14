@@ -24,9 +24,7 @@ class Visitor extends ClassCodeVisitorSupport {
     private registryMethodCall(MethodCallExpression call){
         def result = false
         def className = call.receiver.type.name
-        if (className.startsWith(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX) && className.endsWith(";")) {
-            className = className.substring(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX.length(), className.length() - 1)
-        }
+        Utils.configClassnameFromMethod(className)
         if( Utils.isValidClass(className, projectFiles) ) {
             scenarioInterface.methods += [name:call.methodAsString, type:className]
             result = true

@@ -28,6 +28,12 @@ class Utils {
         }
     }
 
+    static configClassnameFromMethod(String className){
+        if (className.startsWith(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX) && className.endsWith(";")) {
+            className = className.substring(ClassUtils.NON_PRIMITIVE_ARRAY_PREFIX.length(), className.length() - 1)
+        }
+    }
+
     static boolean isValidClassByAPI(String referencedClass){
         if(INVALID_CLASS_REGEX) {
             if(referencedClass ==~ INVALID_CLASS_REGEX) false
