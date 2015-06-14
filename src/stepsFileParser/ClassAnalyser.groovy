@@ -20,13 +20,9 @@ class ClassAnalyser {
     ScenarioInterfaceFileManager interfaceManager
 
     public ClassAnalyser(){
-        analysedFile = Utils.config.test.file
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
-        pluginsPath = []
-        Utils.config.grails.plugin.path?.each{ k, v ->
-            pluginsPath += v
-        }
         configureClassLoader()
+        analysedFile = Utils.config.test.file
         interfaceManager = new ScenarioInterfaceFileManager(analysedFile)
     }
 
@@ -34,6 +30,13 @@ class ClassAnalyser {
         this()
         analysedFile = fileToAnalyse
         interfaceManager = new ScenarioInterfaceFileManager(analysedFile)
+    }
+
+    private fillPluginsPath(){
+        pluginsPath = []
+        Utils.config.grails.plugin.path?.each{ k, v ->
+            pluginsPath += v
+        }
     }
 
     private generateAst(String path){
@@ -48,6 +51,7 @@ class ClassAnalyser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
 
+        fillPluginsPath()
         configurePlugins()
 
         //compiled code files
@@ -120,7 +124,7 @@ class ClassAnalyser {
         visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
     }
 
-    private doBasicAnalysis(){
+    private doFirstLevelAnalysis(){
         def ast = generateAst(analysedFile)
         ClassNode classNode = ast.scriptClassDummy
         visitor = new Visitor(classNode.name, projectFiles)
@@ -128,13 +132,13 @@ class ClassAnalyser {
     }
 
     def doDirectAnalysis(){
-        doBasicAnalysis()
+        doFirstLevelAnalysis()
         interfaceManager.updateScenarioInterfaceFile(visitor.scenarioInterface)
     }
 
     def doIndirectAnalysis(){
         def visitedFiles = []
-        if(!visitor) doBasicAnalysis()
+        if(!visitor) doFirstLevelAnalysis()
 
         def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
         while(!files.isEmpty()) {
