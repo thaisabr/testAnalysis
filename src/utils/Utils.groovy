@@ -103,7 +103,11 @@ class Utils {
 
     static String getShortClassPath(String className, Collection projectFiles){
         def filename = getClassPath(className, projectFiles)
-        if(!filename?.isEmpty()) return (filename - PROJECT_PATH).substring(1)
+        return getShortClassPath(filename)
+    }
+
+    static String getShortClassPath(String classPath){
+        if(!classPath?.isEmpty()) return (classPath - PROJECT_PATH).substring(1)
         else return ""
     }
 
