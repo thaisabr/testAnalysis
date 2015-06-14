@@ -9,12 +9,12 @@ class ScenarioInterfaceFileManager {
 
     public ScenarioInterfaceFileManager(String path){
         this.file = new File(Utils.getInterfaceFileName(path))
-        writeText("Code to analyse: ${path}\n")
+        writeText("Code to analyse: ${Utils.getShortClassPath(path)}\n")
     }
 
     public ScenarioInterfaceFileManager(String featurePath, String scenarioName){
         this.file = new File(Utils.getInterfaceFileName(featurePath, scenarioName))
-        writeText("Code to analyse: ${featurePath}, scenario: $scenarioName\n")
+        writeText("Code to analyse: ${Utils.getShortClassPath(featurePath)}, scenario: $scenarioName\n")
     }
 
     private writeText(String text){
