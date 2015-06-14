@@ -21,6 +21,7 @@ class TestCodeParser {
         configureClassLoader()
     }
 
+    /* The return is the list of scenarios to analyse */
     public List<Scenario> getFeatureCode(String featurePath){
         def regexList = parseStepsDefinitionFiles()
         def scenarios = ParserGherkinJson.getAllScenarios(featurePath)
