@@ -27,7 +27,7 @@ class FileManager implements ScenarioInterfaceManager {
         file.withWriterAppend{ out ->
             out.write("<Referenced classes: ${scenarioInterface?.classes?.size()}>\n")
             scenarioInterface?.classes?.eachWithIndex{ obj, i ->
-                out.write("(${i+1}) $obj\n")
+                out.write("(${i+1}) $obj.name\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
         }
@@ -96,10 +96,10 @@ class FileManager implements ScenarioInterfaceManager {
 
     private listReferencedProductionClasses(ScenarioInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it) }
+            def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it.name) }
             out.write("<Referenced production classes: ${classes?.size()}>\n")
             classes?.eachWithIndex{ obj, i ->
-                out.write("(${i+1}) $obj\n")
+                out.write("(${i+1}) $obj.name\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
         }

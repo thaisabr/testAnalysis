@@ -3,6 +3,7 @@ package analyser
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
+import output.Task
 import utils.Utils
 import output.ScenarioInterface
 import output.FileManager
@@ -86,15 +87,10 @@ class ScenarioAnalyser {
 
     private listFilesToVisit(Collection lastCalledMethods, Collection allVisitedFiles){
         def files = []
-        def externalValidClasses = lastCalledMethods*.type as Set
-        externalValidClasses = externalValidClasses?.findAll { it != null && Utils.isTestCode(it) }
-
-        externalValidClasses.each{ className ->
-            def file = Utils.getClassPath(className, projectFiles)
-            if(file){
-                def methods = getMethodsToVisit(className, file, lastCalledMethods, allVisitedFiles)
-                if(!methods.isEmpty()) files += [path:file, methods:methods] //file to analyse and its methods
-            }
+        def externalValidClasses = lastCalledMethods?.findAll{ it.type!=null && Utils.isTestCode(it.type) } as Set
+        externalValidClasses.each{ method ->
+            def methods = getMethodsToVisit(method.type, method.file, lastCalledMethods, allVisitedFiles)
+            if(!methods.isEmpty()) files += [path:method.file, methods:methods] //file to analyse and its methods
         }
 
         files
@@ -116,15 +112,12 @@ class ScenarioAnalyser {
         methods
     }
 
-    private extractGSPClassesName(Visitor visitor){
+    private fillGspPath(Visitor visitor){
         def pageCodeVisitor = new PageCodeVisitor(projectFiles)
-        def filesToVisit = visitor?.scenarioInterface?.calledPageMethods*.arg as Set
+        def filesToVisit = visitor?.scenarioInterface?.calledPageMethods*.file as Set
         filesToVisit?.each{ f ->
-            def file = Utils.getClassPath(f, projectFiles)
-            if(file){
-                def ast = generateAst(file)
-                ast.classes.get(0).visitContents(pageCodeVisitor)
-            }
+            def ast = generateAst(f)
+            ast.classes.get(0).visitContents(pageCodeVisitor)
         }
         visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
     }
@@ -148,59 +141,58 @@ class ScenarioAnalyser {
                 files = listFilesToVisit(lastCalledMethods, visitedFiles)
             }
 
-            extractGSPClassesName(visitor)
+            fillGspPath(visitor)
             scenarioInterface.update(visitor.scenarioInterface)
         }
         return scenarioInterface
     }
 
-    List<ScenarioInterface> computeTaskInterfacesForFeature(String featurePath){
-        def scenarioInterfaces = []
+    List<Task> computeTaskInterfacesForFeature(String featurePath){
+        def tasks = []
         def scenarios = parser.getFeatureCode(featurePath)
         scenarios.each { scenario ->
-            def scenarioInterface = computeTaskInterface(scenario)
-            scenarioInterfaces += [scenario:scenario, interface:scenarioInterface]
+            tasks += computeTaskInterface(scenario)
         }
-        return scenarioInterfaces
+        return tasks
     }
 
-    ScenarioInterface computeTaskInterface(Scenario scenario){
+    Task computeTaskInterface(Scenario scenario){
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
         def interfaceManager = new FileManager(scenario.file, scenario.name)
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return scenarioInterface
+        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
     }
 
-    ScenarioInterface computeTaskInterface(String featurePath, int line){
+    Task computeTaskInterface(String featurePath, int line){
         def scenario = parser.getScenarioCode(featurePath, line)
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
         def interfaceManager = new FileManager(featurePath, scenario.name)
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return scenarioInterface
+        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
     }
 
-    ScenarioInterface computeTaskInterface(){
+    Task computeTaskInterface(){
         def scenario = parser.getScenarioCode(Utils.config.scenario.path, Utils.config.scenario.line)
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
         def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.name)
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return scenarioInterface
+        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
     }
 
-    List<ScenarioInterface> computeTaskInterfaces(){
-        def interfaces = []
+    List<Task> computeTaskInterfaces(){
+        def tasks = []
         Utils.config.scenario.lines.each{ scenarioLine ->
             def scenario = parser.getScenarioCode(Utils.config.scenario.path, scenarioLine)
             def firstStepFiles = getFilesToAnalyse(scenario)
             def scenarioInterface = search(firstStepFiles)
             def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.name)
             interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-            interfaces += scenarioInterface
+            tasks += new Task(scenario:scenario, scenarioInterface:scenarioInterface)
         }
-        return interfaces
+        return tasks
     }
 
 }

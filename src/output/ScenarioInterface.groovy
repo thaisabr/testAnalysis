@@ -10,7 +10,7 @@ class ScenarioInterface {
     Set methods //static and non-static called methods
     Set staticFields //declared static fields
     Set fields //declared fields
-    Set accessedProperties //accessed fields
+    Set accessedProperties //accessed fields and constants, for example: "foo.bar"
 
     /************** Specific to web-based tests. When we have a GSP parser such code should be removed! ***************/
     def calledPageMethods //help to identify referenced pages (GSP files); methods "to" and "at"
@@ -28,33 +28,27 @@ class ScenarioInterface {
         this.referencedPages = [] as Set
     }
 
-    /*At the moment, it is considered only the information that is necessary for similarity measure.*/
-    int size(){
-        classes?.size() + getProductionCalledMethods()?.size() + getDeclaredFields()?.size() +
-        accessedProperties?.size()
-    }
-
     Set getProductionCalledMethods(){
-        methods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) }
+        methods?.findAll{ it.type!=null && !Utils.isTestCode(it.type) } //format: [name, type, file]
     }
 
     Set getDeclaredFields(){
-        staticFields+fields
+        staticFields+fields //format: [name, type, value, file]
     }
 
+    /* At the moment, it is only considered classes from called methods. */
     Set getRelevantClasses(){
-        def classes =  classes?.findAll{ !Utils.isTestCode(it) }
-        def methods = productionCalledMethods*.type as Set
-        (classes+methods as Set).sort()
+        def classes =  (classes*.name).findAll{ !Utils.isTestCode(it) }
+        def methods = productionCalledMethods*.type
+        (classes+methods as Set)?.sort()
     }
 
-    Set getRelevantFiles(Collection projectFiles){
-        def relevantFiles = []
-        def allfiles = getRelevantClasses()+referencedPages
-        allfiles.each{
-            relevantFiles += Utils.getShortClassPath(it, projectFiles)
-        }
-        return relevantFiles.sort()
+    /* At the moment, it is only considered files from called methods. */
+    Set getRelevantFiles(){
+        def classes =  (classes.findAll{ !Utils.isTestCode(it.name) })*.file
+        def methods = productionCalledMethods*.file
+        def allfiles = ((classes+methods+referencedPages) as Set).collect{ Utils.getShortClassPath(it) }
+        return allfiles?.sort()
     }
 
     def update(ScenarioInterface scenarioInterface){

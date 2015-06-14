@@ -25,8 +25,9 @@ class Visitor extends ClassCodeVisitorSupport {
         def result = false
         def className = call.receiver.type.name
         Utils.configClassnameFromMethod(className)
-        if( Utils.isValidClass(className, projectFiles) ) {
-            scenarioInterface.methods += [name:call.methodAsString, type:className]
+        def path = Utils.getClassPath(className, projectFiles)
+        if( Utils.isValidClass(className, path) ) {
+            scenarioInterface.methods += [name:call.methodAsString, type:className, file:path]
             result = true
         }
         result
@@ -37,7 +38,9 @@ class Visitor extends ClassCodeVisitorSupport {
         if (call.implicitThis && Utils.isValidMethod(call.methodAsString)) { //call from test code
             if( Utils.isPageMethod(call.methodAsString) ){
                 def value = call.arguments.text
-                scenarioInterface.calledPageMethods += [name: call.methodAsString, arg:value.substring(1,value.length()-1)]
+                def className = value.substring(1,value.length()-1)
+                def path = Utils.getClassPath(className, projectFiles)
+                if(!path?.isEmpty()) scenarioInterface.calledPageMethods += [name: call.methodAsString, arg:className, file:path]
             }
             /*else {
                 //calls for other methods do not need to be registered
@@ -52,7 +55,7 @@ class Visitor extends ClassCodeVisitorSupport {
         def result = false
         if(!call.implicitThis) { //call from other class
             if (call.receiver.dynamicTyped) {
-                scenarioInterface.methods += [name: call.methodAsString, type: null]
+                scenarioInterface.methods += [name: call.methodAsString, type: null, file:null]
                 result = true
             } else {
                 result = registryMethodCall(call)
@@ -79,7 +82,10 @@ class Visitor extends ClassCodeVisitorSupport {
     @Override
     public void visitConstructorCallExpression(ConstructorCallExpression call){
         super.visitConstructorCallExpression(call)
-        if( Utils.isValidClass(call?.type?.name, projectFiles) ) scenarioInterface.classes += call?.type?.name
+        def path = Utils.getClassPath(call?.type?.name, projectFiles)
+        if( Utils.isValidClass(call?.type?.name, path) ){
+            scenarioInterface.classes += [name: call?.type?.name, file:path]
+        }
     }
 
     @Override
@@ -89,9 +95,11 @@ class Visitor extends ClassCodeVisitorSupport {
         switch (call.receiver.class){
             case ConstructorCallExpression.class: //composite call that includes constructor call
                 // ex: def path = new File(".").getCanonicalPath() + File.separator + "test" + File.separator + "files" + File.separator + "TCS.pdf"
-                if (Utils.isValidClass(call.receiver.type.name, projectFiles)) {
-                    scenarioInterface.classes += call.receiver.type.name
-                    scenarioInterface.methods += [name:call.methodAsString, type:call.objectExpression.type.name]
+                def path = Utils.getClassPath(call.receiver.type.name, projectFiles)
+                if (Utils.isValidClass(call.receiver.type.name, path)) {
+                    def className = call.objectExpression.type.name
+                    scenarioInterface.classes += [name:call.receiver.type.name, file:path]
+                    scenarioInterface.methods += [name:call.methodAsString, type:className, file:path]
                 }
                 break
             case VariableExpression.class: //call that uses a reference variable
@@ -115,25 +123,33 @@ class Visitor extends ClassCodeVisitorSupport {
     //Static method or step method(static import)
     public void visitStaticMethodCallExpression(StaticMethodCallExpression call){
         super.visitStaticMethodCallExpression(call)
-        if (Utils.isValidClass(call.ownerType.name, projectFiles)){
-            scenarioInterface.methods += [name:call.methodAsString, type:call.ownerType.name]
+        def path = Utils.getClassPath(call.ownerType.name, projectFiles)
+        if (Utils.isValidClass(call.ownerType.name, path)){
+            def className = call.ownerType.name
+            scenarioInterface.methods += [name:call.methodAsString, type:className, file:path]
         }
     }
 
     @Override
     public void visitField(FieldNode node){
         super.visitField(node)
-        def result = [name:node.name, type:node.type.name, value:node.initialValueExpression.value]
-        if(node.static) scenarioInterface.staticFields += result
-        else scenarioInterface.fields += result
+        def className = node.type.name
+        def path = Utils.getClassPath(className, projectFiles)
+        if(Utils.isValidClass(className, path)) {
+            def result = [name:node.name, type:className, value:node.initialValueExpression.value, file:path]
+            if (node.static) scenarioInterface.staticFields += result
+            else scenarioInterface.fields += result
+        }
     }
 
     @Override
-    //fields and constants from other classes
+    //accessing fields and constants from other classes, for example: "foo.bar"
     public void visitPropertyExpression(PropertyExpression expression){
         super.visitPropertyExpression(expression)
-        if ( Utils.isValidClass(expression.objectExpression.type.name, projectFiles) ){
-            scenarioInterface.accessedProperties += [name:expression.propertyAsString, type:expression.objectExpression.type.name]
+        def path = Utils.getClassPath(expression.objectExpression.type.name, projectFiles)
+        if ( Utils.isValidClass(expression.objectExpression.type.name, path) ){
+            def className = expression.objectExpression.type.name
+            scenarioInterface.accessedProperties += [name:expression.propertyAsString, type:className, file:path]
         }
     }
 

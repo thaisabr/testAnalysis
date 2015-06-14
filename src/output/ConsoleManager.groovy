@@ -15,7 +15,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
     private static listReferencedClasses(ScenarioInterface scenarioInterface){
         println "<Referenced classes: ${scenarioInterface?.classes?.size()}>"
         scenarioInterface?.classes?.eachWithIndex{ obj, i ->
-            println "(${i+1}) $obj"
+            println "(${i+1}) $obj.name"
         }
         println "---------------------------------------------------------------------------------"
     }
@@ -70,10 +70,10 @@ class ConsoleManager implements ScenarioInterfaceManager {
     }
 
     private static listReferencedProductionClasses(ScenarioInterface scenarioInterface){
-        def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it) }
+        def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it.name) }
         println "<Referenced production classes: ${classes?.size()}>"
         classes?.eachWithIndex{ obj, i ->
-            println "(${i+1}) $obj"
+            println "(${i+1}) $obj.name"
         }
         println "---------------------------------------------------------------------------------"
     }

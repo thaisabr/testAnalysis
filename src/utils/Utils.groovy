@@ -42,10 +42,8 @@ class Utils {
         else true
     }
 
-    static boolean isValidClass(String referencedClass, List projectFiles){
-        if(isValidClassByAPI(referencedClass) && isValidClassByProject(referencedClass, projectFiles)){
-            true
-        }
+    static boolean isValidClass(String referencedClass, String path){
+        if(path!=null && !path.isEmpty() && isValidClassByAPI(referencedClass)) true
         else false
     }
 
@@ -57,20 +55,6 @@ class Utils {
     static boolean isPageMethod(String referencedMethod){
         if(referencedMethod in PAGE_METHODS) true
         else false
-    }
-
-    static boolean isValidClassByProject(String referencedClass, List projectFiles){
-        def result = true
-        //def filename = ClassUtils.convertClassNameToResourcePath(referencedClass)
-        if(projectFiles){
-            //result = projectFiles?.find{ it == filename } ? true : false
-            def searchResult = projectFiles?.find{ name ->
-                def aux = ClassUtils.convertResourcePathToClassName(name)
-                aux ==~ /.*$referencedClass\$GROOVY_FILENAME_EXTENSION/
-            }
-            if (!searchResult) result = false
-        }
-        return result
     }
 
     static getFilesFromDirectory(String directory){
@@ -119,7 +103,11 @@ class Utils {
     }
 
     static String getShortClassPath(String classPath){
-        if(!classPath?.isEmpty()) return (classPath - PROJECT_PATH).substring(1)
+        if(classPath != null && !classPath.isEmpty()) {
+            def diff = classPath - PROJECT_PATH
+            if(!diff.isEmpty()) return diff.substring(1)
+            else return classPath
+        }
         else return ""
     }
 
