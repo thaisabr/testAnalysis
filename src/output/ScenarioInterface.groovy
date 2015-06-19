@@ -7,7 +7,7 @@ class ScenarioInterface {
 
     Set files
     Set classes //instantiated classes
-    Set methods //static and non-static called methods
+    Set methods //static and non-static called methods; keys:[name, type, file]
     Set staticFields //declared static fields
     Set fields //declared fields
     Set accessedProperties //accessed fields and constants, for example: "foo.bar"
