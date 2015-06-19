@@ -85,15 +85,42 @@ class ScenarioAnalyser {
         visitor
     }
 
-    private listFilesToVisit(Collection lastCalledMethods, Collection allVisitedFiles){
-        def files = []
-        def externalValidClasses = lastCalledMethods?.findAll{ it.type!=null && Utils.isTestCode(it.type) } as Set
-        externalValidClasses.each{ method ->
-            def methods = getMethodsToVisit(method.type, method.file, lastCalledMethods, allVisitedFiles)
-            if(!methods.isEmpty()) files += [path:method.file, methods:methods] //file to analyse and its methods
+    private static updateVisitedFiles(List allVisitedFiles, List filesToVisit){
+        def allFiles = allVisitedFiles + filesToVisit
+        def paths = (allFiles*.path)?.unique()
+        def result = []
+        paths?.each{ path ->
+            def methods = (allFiles?.findAll{ it.path == path}*.methods)?.flatten()?.unique()
+            if(methods!=null && !methods.isEmpty()) result += [path:path, methods:methods]
         }
+        return result
+    }
 
-        files
+    private static listTestFilesToVisit(Collection lastCalledMethods){
+        def testFiles = []
+        def externalTestMethods = lastCalledMethods?.findAll{ it.type!=null && Utils.isTestCode(it.type) }?.unique()
+        externalTestMethods*.file.unique().each{ path ->
+            def methods = externalTestMethods.findAll{ it.file == path }*.name
+            testFiles += [path:path, methods:methods]
+        }
+        return testFiles
+    }
+
+    //keywords of lastCalledMethods: [name, type, file]
+    //keywords of allVisitedFiles: [path:[], methods:[]]
+    private static listFilesToVisit(Collection lastCalledMethods, List allVisitedFiles){
+        def testFiles = listTestFilesToVisit(lastCalledMethods)
+        def filesToVisit = []
+        testFiles.each{ file ->
+            def match = allVisitedFiles?.find{ it.path == file.path }
+            if(match!=null) {
+                filesToVisit += [path:file.path, methods:file.methods-match.methods]
+            }
+            else {
+                filesToVisit += [path:file.path, methods:file.methods]
+            }
+        }
+        return filesToVisit
     }
 
     private static getMethodsToVisit(String className, String file, Collection lastCalledMethods, Collection visitedFiles){
@@ -116,27 +143,32 @@ class ScenarioAnalyser {
         def pageCodeVisitor = new PageCodeVisitor(projectFiles)
         def filesToVisit = visitor?.scenarioInterface?.calledPageMethods*.file as Set
         filesToVisit?.each{ f ->
-            def ast = generateAst(f)
-            ast.classes.get(0).visitContents(pageCodeVisitor)
+            if(f != null){ //f could be null if the test code references a class or file that does not exist
+                generateAst(f).classes.get(0).visitContents(pageCodeVisitor)
+            }
         }
         visitor?.scenarioInterface?.referencedPages = pageCodeVisitor.pages
+    }
+
+    private visitFile(def file, Visitor visitor){
+        def ast = generateAst(file.path)
+        def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, file.methods, visitor)
+        ast.classes.get(0).visitContents(auxVisitor)
     }
 
     private ScenarioInterface search(List firstStepFiles){
         def scenarioInterface = new ScenarioInterface()
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
-            def visitedFiles = []
+            def visitedFiles = [] //format:[path:[], methods:[]]
             def files = listFilesToVisit(visitor.scenarioInterface.methods, visitedFiles)
 
             while (!files.isEmpty()) {
-                def backupCalledMethods = visitor.scenarioInterface.methods
+                def backupCalledMethods = visitor.scenarioInterface.methods //keys:[name, type, file]
                 files.each { f ->
-                    def ast = generateAst(f.path)
-                    def auxVisitor = new MethodVisitor(ast.scriptClassDummy.name, projectFiles, f.methods, visitor)
-                    ast.classes.get(0).visitContents(auxVisitor)
+                    visitFile(f, visitor)
                 }
-                visitedFiles += files
+                visitedFiles = updateVisitedFiles(visitedFiles, files)
                 def lastCalledMethods = visitor.scenarioInterface.methods - backupCalledMethods
                 files = listFilesToVisit(lastCalledMethods, visitedFiles)
             }
