@@ -4,7 +4,12 @@ import scenarioParser.Scenario
 
 class Task {
 
-    Scenario scenario
+    List<Scenario> scenarios
     ScenarioInterface scenarioInterface
+
+    public Task(){
+        this.scenarios = []
+        this.scenarioInterface = new ScenarioInterface()
+    }
 
 }

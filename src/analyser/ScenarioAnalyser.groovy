@@ -179,6 +179,7 @@ class ScenarioAnalyser {
         return scenarioInterface
     }
 
+    /* Computing task interface for each scenario of a feature, considering each scenario as a task. */
     List<Task> computeTaskInterfacesForFeature(String featurePath){
         def tasks = []
         def scenarios = parser.getFeatureCode(featurePath)
@@ -188,41 +189,65 @@ class ScenarioAnalyser {
         return tasks
     }
 
+    /* Computing task interface for a scenario */
     Task computeTaskInterface(Scenario scenario){
+        if(scenario == null) return null
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
-        def interfaceManager = new FileManager(scenario.file, scenario.name)
+        def interfaceManager = new FileManager(scenario.file, scenario.line.toString())
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
+        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
     }
 
+    /* Computing task interface for a scenario */
     Task computeTaskInterface(String featurePath, int line){
         def scenario = parser.getScenarioCode(featurePath, line)
+        if(scenario == null) return null
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
-        def interfaceManager = new FileManager(featurePath, scenario.name)
+        def interfaceManager = new FileManager(featurePath, scenario.line.toString())
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
+        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
     }
 
+    /* Computing task interface for a group of scenarios, considering all of them as an unique task. */
+    Task computeTaskInterface(String featurePath, int... lines){
+        if(lines == null || lines.length==0) return null
+        Task task = new Task()
+        lines?.each{ line ->
+            def scenario = parser.getScenarioCode(featurePath, line)
+            def firstStepFiles = getFilesToAnalyse(scenario)
+            def scenarioInterface = search(firstStepFiles)
+            task.scenarios += scenario
+            task.scenarioInterface.update(scenarioInterface)
+        }
+        def interfaceManager = new FileManager(featurePath, lines.toString())
+        interfaceManager.updateScenarioInterfaceOutput(task.scenarioInterface)
+        return task
+    }
+
+    /* Computing task interface for a scenario that is specified at the configuration file. */
     Task computeTaskInterface(){
         def scenario = parser.getScenarioCode(Utils.config.scenario.path, Utils.config.scenario.line)
+        if(scenario == null) return null
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
-        def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.name)
+        def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenario:scenario, scenarioInterface:scenarioInterface)
+        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
     }
 
+    /* Computing task interface for each scenario of a feature that is specified at the configuration file, considering
+     each scenario as a task. */
     List<Task> computeTaskInterfaces(){
         def tasks = []
         Utils.config.scenario.lines.each{ scenarioLine ->
             def scenario = parser.getScenarioCode(Utils.config.scenario.path, scenarioLine)
             def firstStepFiles = getFilesToAnalyse(scenario)
             def scenarioInterface = search(firstStepFiles)
-            def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.name)
+            def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
             interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-            tasks += new Task(scenario:scenario, scenarioInterface:scenarioInterface)
+            tasks += new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
         }
         return tasks
     }

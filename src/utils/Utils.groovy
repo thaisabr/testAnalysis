@@ -11,7 +11,8 @@ class Utils {
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAR_FILENAME_EXTENSION = ".jar"
     static final FEATURE_FILENAME_EXTENSION = ".feature"
-    static final INTERFACE_FILENAME_EXTENSION = "Interface.txt"
+    static final TEXT_FILENAME_EXTENSION = ".txt"
+    static final INTERFACE_FILENAME_EXTENSION = "Interface"
     static final JSON_FILENAME_EXTENSION = ".json"
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
     static final INVALID_CLASS_REGEX = /.*(groovy|java|springframework|apache|grails|spock|geb|selenium|cucumber).*/
@@ -112,7 +113,7 @@ class Utils {
         else return ""
     }
 
-    static String getGspPath(String resourcePath, List projectFiles, String projectDir){
+    static String getGspPath(String resourcePath, List projectFiles){
         def name = resourcePath.replaceAll(FILE_SEPARATOR_REGEX, Matcher.quoteReplacement(File.separator))
         int n = name.count(File.separator)
         if(n>1){
@@ -120,23 +121,22 @@ class Utils {
             name = name.substring(0,index)
         }
 
-        def match = projectFiles?.find{ it.contains(name) }
-        if(match) name = match - (projectDir+File.separator)
+        def match = projectFiles?.find{ it.contains(name) } //the best is to define a gsp directory as grails-app\views\
+        if(match) name = match - PROJECT_PATH
         else name = ""
-
         name
     }
 
     static getInterfaceFileName(String path){
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)
-        INTERFACES_PATH + (name - GROOVY_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION
+        INTERFACES_PATH + (name - GROOVY_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION + TEXT_FILENAME_EXTENSION
     }
 
     static getInterfaceFileName(String path, String scenarioName){
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)
-        INTERFACES_PATH + (name - FEATURE_FILENAME_EXTENSION) +"-"+ scenarioName.replace(" ", "_") +"-"+ INTERFACE_FILENAME_EXTENSION
+        INTERFACES_PATH + (name-FEATURE_FILENAME_EXTENSION) + INTERFACE_FILENAME_EXTENSION + "-" + scenarioName + TEXT_FILENAME_EXTENSION
     }
 
     static getJsonFileName(String path){

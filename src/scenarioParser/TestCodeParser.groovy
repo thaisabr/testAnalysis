@@ -51,7 +51,7 @@ class TestCodeParser {
         def scenarioGherkin = ParserGherkinJson.getScenario(featurePath, scenarioLine)
 
         List<Match> result = []
-        scenarioGherkin.steps.each { step ->
+        scenarioGherkin?.steps?.each { step ->
             def matchedRegex = regexList.findAll{ step.name ==~ it.regex}
             if(matchedRegex && matchedRegex.size()==1){
                 def match = matchedRegex[0]
