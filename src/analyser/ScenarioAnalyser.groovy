@@ -199,17 +199,6 @@ class ScenarioAnalyser {
         return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
     }
 
-    /* Computing task interface for a scenario */
-    Task computeTaskInterface(String featurePath, int line){
-        def scenario = parser.getScenarioCode(featurePath, line)
-        if(scenario == null) return null
-        def firstStepFiles = getFilesToAnalyse(scenario)
-        def scenarioInterface = search(firstStepFiles)
-        def interfaceManager = new FileManager(featurePath, scenario.line.toString())
-        interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
-    }
-
     /* Computing task interface for a group of scenarios, considering all of them as an unique task. */
     Task computeTaskInterface(String featurePath, int... lines){
         if(lines == null || lines.length==0) return null
