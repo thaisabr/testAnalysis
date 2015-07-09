@@ -31,21 +31,17 @@ class SearchManager {
         searcher.search(query, collector)
         //Ranking
         ScoreDoc[] hits = collector.topDocs().scoreDocs
-        println("Found " + hits.length + " hits.")
-        hits?.eachWithIndex{ it, i ->
-            Document d = searcher.doc(it.doc)
-            println "${i+1}: ${d.get("content")}(${it.score})"
-           //println searcher.explain(query, it.doc)
-        }
+        displayResults(hits)
 
         return hits
     }
 
-    def displayResults(ScoreDoc[] hits) {
+    private displayResults(ScoreDoc[] hits) {
         println("Found " + hits.length + " hits.")
         hits?.eachWithIndex{ it, i ->
             Document d = searcher.doc(it.doc)
             println "${i+1}: ${d.get("content")}(${it.score})"
+            //println searcher.explain(query, it.doc)
         }
         //reader.close()
     }

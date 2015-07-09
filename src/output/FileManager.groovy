@@ -56,9 +56,9 @@ class FileManager implements TestInterfaceManager {
         }
     }
 
-    private listFields(TestInterface scenarioInterface){
+    private listFields(String title, TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
-            out.write("<Fields: ${scenarioInterface?.fields?.size()}>\n")
+            out.write(title)
             scenarioInterface?.fields?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type: $obj.value\n")
             }
@@ -66,21 +66,19 @@ class FileManager implements TestInterfaceManager {
         }
     }
 
+    private listFields(TestInterface scenarioInterface){
+        listFields("<Fields: ${scenarioInterface?.fields?.size()}>\n", scenarioInterface)
+    }
+
+    private listStaticFields(TestInterface scenarioInterface){
+        listFields("<Static fields: ${scenarioInterface?.staticFields?.size()}>\n", scenarioInterface)
+    }
+
     private listProperties(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Properties: ${scenarioInterface?.accessedProperties?.size()}>\n")
             scenarioInterface?.accessedProperties?.eachWithIndex{ obj, i ->
                 out.write("(${i+1}) $obj.name: $obj.type\n")
-            }
-            out.write("---------------------------------------------------------------------------------\n")
-        }
-    }
-
-    private listStaticFields(TestInterface scenarioInterface){
-        file.withWriterAppend{ out ->
-            out.write("<Static fields: ${scenarioInterface?.staticFields?.size()}>\n")
-            scenarioInterface?.staticFields?.eachWithIndex{ obj, i ->
-                out.write("(${i+1}) $obj.name: $obj.type: $obj.value\n")
             }
             out.write("---------------------------------------------------------------------------------\n")
         }

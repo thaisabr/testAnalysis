@@ -123,22 +123,6 @@ class ScenarioAnalyser {
         return filesToVisit
     }
 
-    private static getMethodsToVisit(String className, String file, Collection lastCalledMethods, Collection visitedFiles){
-        def methods = lastCalledMethods?.findAll{it.type == className}?.sort{it.name}
-        methods = methods*.name
-        def index = visitedFiles?.findLastIndexOf{ it.path == file }
-        if(index != -1) {
-            def alreadyVisitedFile = visitedFiles[index]
-            if (alreadyVisitedFile.methods != methods) {
-                methods = (alreadyVisitedFile.methods + methods as Set).sort()
-            } else {
-                methods = []
-            }
-        }
-
-        methods
-    }
-
     private fillGspPath(Visitor visitor){
         def pageCodeVisitor = new PageCodeVisitor(projectFiles)
         def filesToVisit = visitor?.scenarioInterface?.calledPageMethods*.file as Set
@@ -199,18 +183,20 @@ class ScenarioAnalyser {
         return new Task(scenarios:[scenario], testInterface:scenarioInterface)
     }
 
+    private analyseScenario(Scenario scenario, Task task){
+        def firstStepFiles = getFilesToAnalyse(scenario)
+        def scenarioInterface = search(firstStepFiles)
+        task.scenarios += scenario
+        task.testInterface.update(scenarioInterface)
+    }
+
     /* Computing task interface for a group of scenarios, considering all of them as an unique task. */
     Task computeTaskInterface(TaskDescription... descriptions) {
         if(descriptions == null || descriptions.length==0) return null
         Task task = new Task()
         descriptions.each{ description ->
             def scenarios = parser.getScenariosCode(description.path, description.lines)
-            scenarios?.each{ scenario ->
-                def firstStepFiles = getFilesToAnalyse(scenario)
-                def scenarioInterface = search(firstStepFiles)
-                task.scenarios += scenario
-                task.testInterface.update(scenarioInterface)
-            }
+            scenarios?.each{ analyseScenario(it, task) }
         }
         def interfaceManager = new FileManager(descriptions)
         interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
@@ -222,10 +208,7 @@ class ScenarioAnalyser {
         Task task = new Task()
         lines?.each{ line ->
             def scenario = parser.getScenarioCode(featurePath, line)
-            def firstStepFiles = getFilesToAnalyse(scenario)
-            def scenarioInterface = search(firstStepFiles)
-            task.scenarios += scenario
-            task.testInterface.update(scenarioInterface)
+            analyseScenario(scenario, task)
         }
         def interfaceManager = new FileManager(featurePath, lines.toString())
         interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
@@ -249,11 +232,13 @@ class ScenarioAnalyser {
         def tasks = []
         Utils.config.scenario.lines.each{ scenarioLine ->
             def scenario = parser.getScenarioCode(Utils.config.scenario.path, scenarioLine)
-            def firstStepFiles = getFilesToAnalyse(scenario)
-            def scenarioInterface = search(firstStepFiles)
-            def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
-            interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-            tasks += new Task(scenarios:[scenario], testInterface:scenarioInterface)
+            if(scenario){
+                def firstStepFiles = getFilesToAnalyse(scenario)
+                def scenarioInterface = search(firstStepFiles)
+                def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
+                interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
+                tasks += new Task(scenarios:[scenario], testInterface:scenarioInterface)
+            }
         }
         return tasks
     }
