@@ -5,7 +5,7 @@ import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
 import output.Task
 import utils.Utils
-import output.ScenarioInterface
+import output.TestInterface
 import output.FileManager
 import scenarioParser.Scenario
 import scenarioParser.TestCodeParser
@@ -156,8 +156,8 @@ class ScenarioAnalyser {
         ast.classes.get(0).visitContents(auxVisitor)
     }
 
-    private ScenarioInterface search(List firstStepFiles){
-        def scenarioInterface = new ScenarioInterface()
+    private TestInterface search(List firstStepFiles){
+        def scenarioInterface = new TestInterface()
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
             def visitedFiles = [] //format:[path:[], methods:[]]
@@ -196,10 +196,27 @@ class ScenarioAnalyser {
         def scenarioInterface = search(firstStepFiles)
         def interfaceManager = new FileManager(scenario.file, scenario.line.toString())
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
+        return new Task(scenarios:[scenario], testInterface:scenarioInterface)
     }
 
     /* Computing task interface for a group of scenarios, considering all of them as an unique task. */
+    Task computeTaskInterface(TaskDescription... descriptions) {
+        if(descriptions == null || descriptions.length==0) return null
+        Task task = new Task()
+        descriptions.each{ description ->
+            def scenarios = parser.getScenariosCode(description.path, description.lines)
+            scenarios?.each{ scenario ->
+                def firstStepFiles = getFilesToAnalyse(scenario)
+                def scenarioInterface = search(firstStepFiles)
+                task.scenarios += scenario
+                task.testInterface.update(scenarioInterface)
+            }
+        }
+        def interfaceManager = new FileManager(descriptions)
+        interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
+        return task
+    }
+
     Task computeTaskInterface(String featurePath, int... lines){
         if(lines == null || lines.length==0) return null
         Task task = new Task()
@@ -208,10 +225,10 @@ class ScenarioAnalyser {
             def firstStepFiles = getFilesToAnalyse(scenario)
             def scenarioInterface = search(firstStepFiles)
             task.scenarios += scenario
-            task.scenarioInterface.update(scenarioInterface)
+            task.testInterface.update(scenarioInterface)
         }
         def interfaceManager = new FileManager(featurePath, lines.toString())
-        interfaceManager.updateScenarioInterfaceOutput(task.scenarioInterface)
+        interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
         return task
     }
 
@@ -223,7 +240,7 @@ class ScenarioAnalyser {
         def scenarioInterface = search(firstStepFiles)
         def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
         interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-        return new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
+        return new Task(scenarios:[scenario], testInterface:scenarioInterface)
     }
 
     /* Computing task interface for each scenario of a feature that is specified at the configuration file, considering
@@ -236,7 +253,7 @@ class ScenarioAnalyser {
             def scenarioInterface = search(firstStepFiles)
             def interfaceManager = new FileManager(Utils.config.scenario.path, scenario.line.toString())
             interfaceManager.updateScenarioInterfaceOutput(scenarioInterface)
-            tasks += new Task(scenarios:[scenario], scenarioInterface:scenarioInterface)
+            tasks += new Task(scenarios:[scenario], testInterface:scenarioInterface)
         }
         return tasks
     }

@@ -1,6 +1,6 @@
 package similarity
 
-import output.ScenarioInterface
+import output.TestInterface
 
 
 class TaskInterfaceSimilarityAnalyser {
@@ -11,34 +11,34 @@ class TaskInterfaceSimilarityAnalyser {
     }
 
     /* How to interpret different similarity measures? */
-    static calculateSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateSimilarity(TestInterface scen1, TestInterface scen2){
         def relClassIndex = calculateJaccardIndex(scen1.getRelevantClasses(), scen2.getRelevantClasses())
         def prodCalledMethodIndex = calculateJaccardIndex(scen1.getProductionCalledMethods(), scen2.getProductionCalledMethods())
         def files = calculateJaccardIndex(scen1.referencedPages, scen2.referencedPages)
         [classIndex:relClassIndex, methodIndex:prodCalledMethodIndex, filesIndex:files]
     }
 
-    static calculateRelevantClassSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateRelevantClassSimilarity(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.getRelevantClasses(), scen2.getRelevantClasses())
     }
 
-    static calculateReferencedClassSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateReferencedClassSimilarity(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.classes, scen2.classes)
     }
 
-    static calculateCalledMethodSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateCalledMethodSimilarity(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.getProductionCalledMethods(), scen2.getProductionCalledMethods())
     }
 
-    static calculateDeclaredFieldSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateDeclaredFieldSimilarity(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.getDeclaredFields(), scen2.getDeclaredFields())
     }
 
-    static calculateAccessedPropSimilarity(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateAccessedPropSimilarity(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.accessedProperties, scen2.accessedProperties)
     }
 
-    static calculateReferencedPages(ScenarioInterface scen1, ScenarioInterface scen2){
+    static calculateReferencedPages(TestInterface scen1, TestInterface scen2){
         calculateJaccardIndex(scen1.referencedPages, scen2.referencedPages)
     }
 

@@ -2,7 +2,7 @@ package output
 
 import utils.Utils
 
-class ConsoleManager implements ScenarioInterfaceManager {
+class ConsoleManager implements TestInterfaceManager {
 
     public ConsoleManager(String path){
         println "Code to analyse: ${Utils.getShortClassPath(path)}\n"
@@ -12,7 +12,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "Code to analyse: ${Utils.getShortClassPath(featurePath)}, scenario: $scenarioName\n"
     }
 
-    private static listReferencedClasses(ScenarioInterface scenarioInterface){
+    private static listReferencedClasses(TestInterface scenarioInterface){
         println "<Referenced classes: ${scenarioInterface?.classes?.size()}>"
         scenarioInterface?.classes?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name"
@@ -20,7 +20,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listCalledMethods(ScenarioInterface scenarioInterface){
+    private static listCalledMethods(TestInterface scenarioInterface){
         println "<Called methods: ${scenarioInterface?.methods?.size()}>"
         scenarioInterface?.methods?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name: $obj.type"
@@ -28,7 +28,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listFields(ScenarioInterface scenarioInterface){
+    private static listFields(TestInterface scenarioInterface){
         println "<Fields: ${scenarioInterface?.fields?.size()}>"
         scenarioInterface?.fields?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name: $obj.type: $obj.value"
@@ -36,7 +36,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listProperties(ScenarioInterface scenarioInterface){
+    private static listProperties(TestInterface scenarioInterface){
         println "<Properties: ${scenarioInterface?.accessedProperties?.size()}>"
         scenarioInterface?.accessedProperties?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name: $obj.type"
@@ -44,7 +44,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listStaticFields(ScenarioInterface scenarioInterface){
+    private static listStaticFields(TestInterface scenarioInterface){
         println "<Static fields: ${scenarioInterface?.staticFields?.size()}>"
         scenarioInterface?.staticFields?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name: $obj.type: $obj.value"
@@ -52,7 +52,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listCalledPageMethods(ScenarioInterface scenarioInterface){
+    private static listCalledPageMethods(TestInterface scenarioInterface){
         println "<Called page methods: ${scenarioInterface?.calledPageMethods?.size()}>"
         scenarioInterface?.calledPageMethods?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj.name: $obj.arg"
@@ -60,7 +60,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listCalledProductionMethods(ScenarioInterface scenarioInterface){
+    private static listCalledProductionMethods(TestInterface scenarioInterface){
         def methods = scenarioInterface?.getProductionCalledMethods()
         println "<Called production Methods: ${methods?.size()}>"
         methods?.eachWithIndex{ obj, i ->
@@ -69,7 +69,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listReferencedProductionClasses(ScenarioInterface scenarioInterface){
+    private static listReferencedProductionClasses(TestInterface scenarioInterface){
         def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it.name) }
         println "<Referenced production classes: ${classes?.size()}>"
         classes?.eachWithIndex{ obj, i ->
@@ -78,7 +78,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listRelevantProductionClasses(ScenarioInterface scenarioInterface){
+    private static listRelevantProductionClasses(TestInterface scenarioInterface){
         println "<Relevant production classes: ${scenarioInterface.relevantClasses?.size()}>"
         scenarioInterface.relevantClasses?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj"
@@ -86,7 +86,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
         println "---------------------------------------------------------------------------------"
     }
 
-    private static listGSP(ScenarioInterface scenarioInterface){
+    private static listGSP(TestInterface scenarioInterface){
         println "<Referenced production GSP files: ${ scenarioInterface?.referencedPages?.size()}>"
         scenarioInterface?.referencedPages?.eachWithIndex{ obj, i ->
             println "(${i+1}) $obj"
@@ -95,7 +95,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
     }
 
     @Override
-    void generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
+    void detailedAnalysis(TestInterface scenarioInterface){
         listReferencedClasses(scenarioInterface)
         listCalledMethods(scenarioInterface)
         listFields(scenarioInterface)
@@ -105,7 +105,7 @@ class ConsoleManager implements ScenarioInterfaceManager {
     }
 
     @Override
-    void updateScenarioInterfaceOutput(ScenarioInterface scenarioInterface){
+    void updateScenarioInterfaceOutput(TestInterface scenarioInterface){
         listCalledProductionMethods(scenarioInterface)
         listReferencedProductionClasses(scenarioInterface)
         listRelevantProductionClasses(scenarioInterface)

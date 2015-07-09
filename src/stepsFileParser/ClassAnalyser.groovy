@@ -7,9 +7,8 @@ import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.control.CompilationUnit
 import org.codehaus.groovy.control.Phases
 import org.codehaus.groovy.control.SourceUnit
-import output.ConsoleManager
 import output.FileManager
-import output.ScenarioInterfaceManager
+import output.TestInterfaceManager
 import utils.Utils
 
 
@@ -19,7 +18,7 @@ class ClassAnalyser {
     List pluginsPath
     GroovyClassLoader classLoader
     Visitor visitor
-    ScenarioInterfaceManager interfaceManager
+    TestInterfaceManager interfaceManager
 
     public ClassAnalyser(){
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)

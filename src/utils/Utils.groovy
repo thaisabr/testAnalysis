@@ -12,6 +12,7 @@ class Utils {
     static final JAR_FILENAME_EXTENSION = ".jar"
     static final FEATURE_FILENAME_EXTENSION = ".feature"
     static final TEXT_FILENAME_EXTENSION = ".txt"
+    static final COMPOUND_INTERFACE_FILENAME = "ManyFiles"
     static final INTERFACE_FILENAME_EXTENSION = "Interface"
     static final JSON_FILENAME_EXTENSION = ".json"
     static final TEST_COD_REGEX = /.*(steps\.|pages\.|TestDataAndOperations).*/
@@ -143,6 +144,10 @@ class Utils {
         def beginIndex = path.lastIndexOf(File.separator)
         def name = path.substring(beginIndex+1)
         JSON_PATH + (name - FEATURE_FILENAME_EXTENSION) + JSON_FILENAME_EXTENSION
+    }
+
+    static getCompoundInterfaceFileName(){
+        INTERFACES_PATH+COMPOUND_INTERFACE_FILENAME+INTERFACE_FILENAME_EXTENSION+TEXT_FILENAME_EXTENSION
     }
 
 }

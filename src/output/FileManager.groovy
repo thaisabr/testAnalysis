@@ -1,11 +1,24 @@
 package output
 
+import analyser.TaskDescription
 import utils.Utils
 
 
-class FileManager implements ScenarioInterfaceManager {
+class FileManager implements TestInterfaceManager {
 
     File file
+
+    public FileManager(TaskDescription... descriptions){
+        if(descriptions.size()==1){
+            this.file = new File(Utils.getInterfaceFileName(descriptions.getAt(0).path, descriptions.getAt(0).lines.toString()))
+            writeText("Code to analyse: ${Utils.getShortClassPath(descriptions.getAt(0).path)}, scenario: ${descriptions.getAt(0).lines.toString()}\n")
+        }
+        else{
+            this.file = new File(Utils.getCompoundInterfaceFileName())
+            def path = descriptions.collect{ Utils.getShortClassPath(it.path) }.toString()
+            writeText("Codes to analyse: $path\n")
+        }
+    }
 
     public FileManager(String path){
         this.file = new File(Utils.getInterfaceFileName(path))
@@ -23,7 +36,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listReferencedClasses(ScenarioInterface scenarioInterface){
+    private listReferencedClasses(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Referenced classes: ${scenarioInterface?.classes?.size()}>\n")
             scenarioInterface?.classes?.eachWithIndex{ obj, i ->
@@ -33,7 +46,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listCalledMethods(ScenarioInterface scenarioInterface){
+    private listCalledMethods(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Called methods: ${scenarioInterface?.methods?.size()}>\n")
             scenarioInterface?.methods?.eachWithIndex{ obj, i ->
@@ -43,7 +56,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listFields(ScenarioInterface scenarioInterface){
+    private listFields(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Fields: ${scenarioInterface?.fields?.size()}>\n")
             scenarioInterface?.fields?.eachWithIndex{ obj, i ->
@@ -53,7 +66,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listProperties(ScenarioInterface scenarioInterface){
+    private listProperties(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Properties: ${scenarioInterface?.accessedProperties?.size()}>\n")
             scenarioInterface?.accessedProperties?.eachWithIndex{ obj, i ->
@@ -63,7 +76,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listStaticFields(ScenarioInterface scenarioInterface){
+    private listStaticFields(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Static fields: ${scenarioInterface?.staticFields?.size()}>\n")
             scenarioInterface?.staticFields?.eachWithIndex{ obj, i ->
@@ -73,7 +86,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listCalledPageMethods(ScenarioInterface scenarioInterface){
+    private listCalledPageMethods(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Called page methods: ${scenarioInterface?.calledPageMethods?.size()}>\n")
             scenarioInterface?.calledPageMethods?.eachWithIndex{ obj, i ->
@@ -83,7 +96,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listCalledProductionMethods(ScenarioInterface scenarioInterface){
+    private listCalledProductionMethods(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             def methods = scenarioInterface?.getProductionCalledMethods()
             out.write("<Called production Methods: ${methods?.size()}>\n")
@@ -94,7 +107,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listReferencedProductionClasses(ScenarioInterface scenarioInterface){
+    private listReferencedProductionClasses(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             def classes =  scenarioInterface?.classes?.findAll{ !Utils.isTestCode(it.name) }
             out.write("<Referenced production classes: ${classes?.size()}>\n")
@@ -105,7 +118,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listRelevantProductionClasses(ScenarioInterface scenarioInterface){
+    private listRelevantProductionClasses(TestInterface scenarioInterface){
        file.withWriterAppend{ out ->
             out.write("<Relevant production classes: ${scenarioInterface.relevantClasses?.size()}>\n")
             scenarioInterface.relevantClasses?.eachWithIndex{ obj, i ->
@@ -115,7 +128,7 @@ class FileManager implements ScenarioInterfaceManager {
         }
     }
 
-    private listGSP(ScenarioInterface scenarioInterface){
+    private listGSP(TestInterface scenarioInterface){
         file.withWriterAppend{ out ->
             out.write("<Referenced production GSP files: ${ scenarioInterface?.referencedPages?.size()}>\n")
             scenarioInterface?.referencedPages?.eachWithIndex{ obj, i ->
@@ -126,7 +139,7 @@ class FileManager implements ScenarioInterfaceManager {
     }
 
     @Override
-    void generateAnalysisDetailedView(ScenarioInterface scenarioInterface){
+    void detailedAnalysis(TestInterface scenarioInterface){
         listReferencedClasses(scenarioInterface)
         listCalledMethods(scenarioInterface)
         listFields(scenarioInterface)
@@ -136,7 +149,7 @@ class FileManager implements ScenarioInterfaceManager {
     }
 
     @Override
-    void updateScenarioInterfaceOutput(ScenarioInterface scenarioInterface){
+    void updateScenarioInterfaceOutput(TestInterface scenarioInterface){
         listCalledProductionMethods(scenarioInterface)
         listReferencedProductionClasses(scenarioInterface)
         listRelevantProductionClasses(scenarioInterface)

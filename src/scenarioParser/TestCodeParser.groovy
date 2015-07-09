@@ -35,18 +35,45 @@ class TestCodeParser {
                     def match = matchedRegex[0]
                     result += new Match(stepLine:step.line, stepDefinition:match)
                 }
-                else result += null
+                else { //no step definition was found for the step
+                    //result += null
+                }
             }
 
-            //when it is not possible to match any step to a step definition the result is null
-            if( result.contains(null) ) totalResult += new Scenario(name:scenario.name, line:scenario.line, file: featurePath, testcode:null)
+            //when it is not possible to match at least a step definition for the scenario, it is not possible to use it to compute task interface
+            if( result.isEmpty() ) totalResult += new Scenario(name:scenario.name, line:scenario.line, file: featurePath, testcode:null)
             else totalResult += new Scenario(name:scenario.name, line:scenario.line, file: featurePath, testcode:result)
         }
 
         totalResult
     }
 
-    public Scenario getScenarioCode(String featurePath, int scenarioLine){
+    List<Scenario> getScenariosCode(String featurePath, List lines){
+        List<Scenario> scenarios = []
+        def regexList = parseStepsDefinitionFiles()
+        def scenarioGherkins = ParserGherkinJson.getScenarios(featurePath, lines)
+
+        scenarioGherkins.each{ scenarioGherkin ->
+            List<Match> result = []
+            scenarioGherkin?.steps?.each { step ->
+                def matchedRegex = regexList.findAll{ step.name ==~ it.regex }
+                if(matchedRegex && matchedRegex.size()==1){ //if matchedRegex.size()>1 there is duplicated test code
+                    def match = matchedRegex[0]
+                    result += new Match(stepLine:step.line, stepDefinition:match)
+                }
+                else { //no step definition was found for the step
+                    //result += null
+                }
+            }
+            //when it is not possible to match at least a step definition for the scenario, it is not possible to use it to compute task interface
+            if( !result.isEmpty() ) {
+                scenarios += new Scenario(name:scenarioGherkin.name, line:scenarioGherkin.line, file: featurePath, testcode:result)
+            }
+        }
+        return scenarios
+    }
+
+    Scenario getScenarioCode(String featurePath, int scenarioLine){
         def regexList = parseStepsDefinitionFiles()
         def scenarioGherkin = ParserGherkinJson.getScenario(featurePath, scenarioLine)
 
@@ -57,12 +84,14 @@ class TestCodeParser {
                 def match = matchedRegex[0]
                 result += new Match(stepLine:step.line, stepDefinition:match)
             }
-            else result += null
+            else { //no step definition was found for the step
+                //result += null
+            }
         }
 
-        //when it is not possible to match any step to a step definition the result is null
-        if( result.contains(null) ) null
-        else new Scenario(name:scenarioGherkin.name, line:scenarioLine, file: featurePath, testcode:result)
+        //when it is not possible to match at least a step definition for the scenario, it is not possible to use it to compute task interface
+        if( result.isEmpty() ) null
+        else new Scenario(name:scenarioGherkin.name, line:scenarioGherkin.line, file: featurePath, testcode:result)
     }
 
     def parseStepsDefinitionFiles(){

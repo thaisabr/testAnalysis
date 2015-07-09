@@ -4,13 +4,12 @@ import org.codehaus.groovy.ast.ClassCodeVisitorSupport
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.control.SourceUnit
-import org.springframework.util.ClassUtils
 import utils.Utils
-import output.ScenarioInterface
+import output.TestInterface
 
 class Visitor extends ClassCodeVisitorSupport {
     SourceUnit source
-    ScenarioInterface scenarioInterface
+    TestInterface scenarioInterface
     def className
     def projectFiles //valid files
 
@@ -18,7 +17,7 @@ class Visitor extends ClassCodeVisitorSupport {
         this.source = null
         this.className = name
         this.projectFiles = projectFiles
-        this.scenarioInterface = new ScenarioInterface()
+        this.scenarioInterface = new TestInterface()
     }
 
     private registryMethodCall(MethodCallExpression call){

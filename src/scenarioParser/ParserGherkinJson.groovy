@@ -32,6 +32,11 @@ class ParserGherkinJson {
         result.elements[0].findAll{ it.type == "scenario"} //other type = scenario output (improve it)
     }
 
+    static Collection getScenarios(String featurePath, List lines){
+        def scenarios = getAllScenarios(featurePath)
+        scenarios.findAll { it.line in lines }
+    }
+
     static getScenario(String featurePath, int scenarioLine){
         def scenarios = getAllScenarios(featurePath)
         scenarios.find { it.line == scenarioLine }

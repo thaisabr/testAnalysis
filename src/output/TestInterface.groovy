@@ -3,7 +3,7 @@ package output
 import utils.Utils
 
 
-class ScenarioInterface {
+class TestInterface {
 
     Set files
     Set classes //instantiated classes
@@ -17,7 +17,7 @@ class ScenarioInterface {
     def referencedPages
     /******************************************************************************************************************/
 
-    public ScenarioInterface(){
+    public TestInterface(){
         this.files = [] as Set
         this.classes = [] as Set
         this.methods = [] as Set
@@ -51,7 +51,7 @@ class ScenarioInterface {
         return allfiles?.sort()
     }
 
-    def update(ScenarioInterface scenarioInterface){
+    def update(TestInterface scenarioInterface){
         this.files += scenarioInterface.files
         this.classes += scenarioInterface.classes
         this.methods += scenarioInterface.methods
