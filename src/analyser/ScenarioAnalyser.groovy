@@ -17,10 +17,11 @@ class ScenarioAnalyser {
     List pluginsPath
     GroovyClassLoader classLoader
     TestCodeParser parser
+    boolean useDependencyCache
 
     public ScenarioAnalyser(){
+        useDependencyCache = true //if true, it dependency cache will be included in classpath. if false, it will happen only if pluginsPath is empty
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
-        pluginsPath = []
         configureClassLoader()
         parser = new TestCodeParser()
     }
@@ -28,7 +29,7 @@ class ScenarioAnalyser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
 
-        Utils.fillPluginsPath(pluginsPath)
+        pluginsPath = Utils.fillPluginsPath()
         configurePlugins()
 
         //compiled code files
@@ -41,23 +42,23 @@ class ScenarioAnalyser {
     }
 
     private configurePlugins(){
-        if(pluginsPath.isEmpty()){
+        if(useDependencyCache || pluginsPath.isEmpty()){
             def jars = Utils.getJarFilesFromDirectory(Utils.config.grails.dependencyCache)
             jars?.each{
                 classLoader.addClasspath(it)
                 println "jar: $it"
             }
         }
-        else{
-            pluginsPath?.each{ path ->
-                classLoader.addClasspath(path)
-                println "Plugin path: $path"
-            }
+
+        pluginsPath.each{ path ->
+            classLoader.addClasspath(path)
+            println "Plugin path: $path"
         }
     }
 
     private static List getFilesToAnalyse(Scenario scenario){
         def organizedFiles = []
+        if(!scenario) return organizedFiles
         def stepsList = scenario.testcode.stepDefinition
         def stepFiles = stepsList*.file as Set
         stepFiles.each{ s ->
@@ -141,6 +142,7 @@ class ScenarioAnalyser {
     }
 
     private TestInterface search(List firstStepFiles){
+        if(!firstStepFiles || firstStepFiles.isEmpty()) return null
         def scenarioInterface = new TestInterface()
         firstStepFiles.each { stepFile ->
             def visitor = doFirstLevelAnalysis(stepFile)
@@ -186,11 +188,13 @@ class ScenarioAnalyser {
     private analyseScenario(Scenario scenario, Task task){
         def firstStepFiles = getFilesToAnalyse(scenario)
         def scenarioInterface = search(firstStepFiles)
-        task.scenarios += scenario
-        task.testInterface.update(scenarioInterface)
+        if(scenario && scenarioInterface) {
+            task.scenarios += scenario
+            task.testInterface.update(scenarioInterface)
+        }
     }
 
-    /* Computing task interface for a group of scenarios, considering all of them as an unique task. */
+    /* Computing task interface for a group of scenarios that could be located at different files, considering all of them as an unique task. */
     Task computeTaskInterface(TaskDescription... descriptions) {
         if(descriptions == null || descriptions.length==0) return null
         Task task = new Task()
@@ -203,15 +207,23 @@ class ScenarioAnalyser {
         return task
     }
 
+    /* Computing task interface for a group of scenarios located at the same file, considering all of them as an unique task. */
     Task computeTaskInterface(String featurePath, int... lines){
         if(lines == null || lines.length==0) return null
+
         Task task = new Task()
         lines?.each{ line ->
+            println "feature path: $featurePath && line: $line"
             def scenario = parser.getScenarioCode(featurePath, line)
-            analyseScenario(scenario, task)
+            println "scenario: $scenario"
+            if(scenario) analyseScenario(scenario, task)
         }
-        def interfaceManager = new FileManager(featurePath, lines.toString())
-        interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
+
+        if(task.testInterface){
+            def interfaceManager = new FileManager(featurePath, lines.toString())
+            interfaceManager.updateScenarioInterfaceOutput(task.testInterface)
+        }
+
         return task
     }
 

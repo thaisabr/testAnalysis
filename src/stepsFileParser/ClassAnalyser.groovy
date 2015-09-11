@@ -22,7 +22,6 @@ class ClassAnalyser {
 
     public ClassAnalyser(){
         projectFiles = Utils.getFilesFromDirectory(Utils.config.project.path)
-        pluginsPath = []
         configureClassLoader()
         analysedFile = Utils.config.test.file
         interfaceManager = new FileManager(analysedFile)
@@ -46,7 +45,7 @@ class ClassAnalyser {
     private configureClassLoader(){
         classLoader = new GroovyClassLoader()
 
-        Utils.fillPluginsPath(pluginsPath)
+        pluginsPath = Utils.fillPluginsPath()
         configurePlugins()
 
         //compiled code files

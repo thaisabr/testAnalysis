@@ -6,9 +6,10 @@ import java.util.regex.Matcher
 
 class Utils {
 
-    static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("Config.groovy"))
+    static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("ConfigAnathema.groovy"))
     static final PROJECT_PATH = config.project.path
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
+    static final JAVA_FILENAME_EXTENSION = ".java"
     static final JAR_FILENAME_EXTENSION = ".jar"
     static final FEATURE_FILENAME_EXTENSION = ".feature"
     static final TEXT_FILENAME_EXTENSION = ".txt"
@@ -24,10 +25,12 @@ class Utils {
     static final JSON_PATH = "${System.getProperty("user.dir")}${File.separator}json${File.separator}"
     static final STEPS = ['Given', 'When', 'Then', 'And', 'But']
 
-    static fillPluginsPath(List pluginsPath){
+    static List fillPluginsPath(){
+        List pluginsPath = []
         config.grails.plugin.path?.each{ k, v ->
             pluginsPath += v
         }
+        return pluginsPath
     }
 
     static configClassnameFromMethod(String className){
@@ -79,6 +82,11 @@ class Utils {
     static getGroovyFilesFromDirectory(String directory){
         def files = getFilesFromDirectory(directory)
         files.findAll{it.contains(GROOVY_FILENAME_EXTENSION)}
+    }
+
+    static getJavaFilesFromDirectory(String directory){
+        def files = getFilesFromDirectory(directory)
+        files.findAll{it.contains(JAVA_FILENAME_EXTENSION)}
     }
 
     static getJarFilesFromDirectory(String directory){
