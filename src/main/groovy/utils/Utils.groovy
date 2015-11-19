@@ -6,7 +6,7 @@ import java.util.regex.Matcher
 
 class Utils {
 
-    static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("ConfigAnathema.groovy"))
+    static config = new ConfigSlurper().parse(Utils.class.classLoader.getResource("Config.groovy"))
     static final PROJECT_PATH = config.project.path
     static final GROOVY_FILENAME_EXTENSION = ".groovy"
     static final JAVA_FILENAME_EXTENSION = ".java"

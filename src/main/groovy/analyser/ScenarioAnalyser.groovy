@@ -213,9 +213,7 @@ class ScenarioAnalyser {
 
         Task task = new Task()
         lines?.each{ line ->
-            println "feature path: $featurePath && line: $line"
             def scenario = parser.getScenarioCode(featurePath, line)
-            println "scenario: $scenario"
             if(scenario) analyseScenario(scenario, task)
         }
 

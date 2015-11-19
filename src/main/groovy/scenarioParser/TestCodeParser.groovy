@@ -18,7 +18,8 @@ class TestCodeParser {
             pluginsPath += v
         }
         configureClassLoader()
-        def stepsDefinitionFiles = Utils.getGroovyFilesFromDirectory(Utils.config.project.test.steps.path)
+        //def stepsDefinitionFiles = Utils.getJavaFilesFromDirectory(Utils.config.project.test.steps.path)
+        def stepsDefinitionFiles = Utils.getGroovyFilesFromDirectory(Utils.config.project.test.steps.path) //generalizar posteriormente (groovy e java)
         regexList = parseStepsDefinitionFiles(stepsDefinitionFiles)
     }
 
